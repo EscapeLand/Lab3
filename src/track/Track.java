@@ -29,7 +29,7 @@ public class Track<E extends PhysicalObject> {
 		return !orbit.contains(newObj) && orbit.add(newObj);
 	}
 	
-	public static<E extends PhysicalObject> boolean removeObject(Set<E> orbit, E obj){
+	public static<E extends PhysicalObject> boolean removeObject(Collection<E> orbit, E obj){
 		return orbit.remove(obj);
 	}
 	

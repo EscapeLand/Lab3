@@ -6,10 +6,14 @@ import java.io.IOException;
 import java.util.Iterator;
 
 public interface CircularOrbit<L extends Object, E extends PhysicalObject> extends Iterable<E>{
-	public static<L, E extends PhysicalObject> CircularOrbit<L, E> empty() {
-		return new ConcreteCircularOrbit<L, E>();
+	public static<L, E extends PhysicalObject> CircularOrbit<L, E> empty_set() {
+		return new SetCircularOrbit<>();
 	}
 	
+	public static<L, E extends PhysicalObject> CircularOrbit<L, E> empty_list() {
+		return new ListCircularOrbit<>();
+	}
+
 	public boolean addTrack(float r);
 	public boolean removeTrack(float r);
 	

@@ -1,7 +1,7 @@
 package appliactions;
 
-import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
+import circularOrbit.SetCircularOrbit;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,7 +11,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet> {
+public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
 	@Override
 	public boolean loadFromFile(String path) throws IOException {
 		File file = new File(path);
