@@ -12,7 +12,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class AtomStructure extends ListCircularOrbit<String, Electron> {
+public class AtomStructure extends ListCircularOrbit<Kernel, Electron> {
 	Graph<Object> graph = Graph.empty();
 	
 	@Override
@@ -30,7 +30,7 @@ public class AtomStructure extends ListCircularOrbit<String, Electron> {
 			reader.close(); return false;
 		}
 		
-		changeCentre(m.group(1));
+		changeCentre(new Kernel(m.group(1)));
 		
 		buffer = reader.readLine();
 		m = patterns[1].matcher(buffer);
@@ -54,7 +54,7 @@ public class AtomStructure extends ListCircularOrbit<String, Electron> {
 		}
 		
 		for(i = 0; i < n; i++){
-			for(int j = 0; j < num[i]; j++) addObject(i + 1, new Electron(i + 1));
+			for(int j = 0; j < num[i]; j++) addObject(new Electron(i + 1));
 		}
 		reader.close();
 		return true;
@@ -64,7 +64,7 @@ public class AtomStructure extends ListCircularOrbit<String, Electron> {
 final class Electron extends PhysicalObject{
 	
 	public Electron(float r) {
-		super(r, 0);
+		super(r, (float) (360 * Math.random()));
 	}
 	
 	@Override
@@ -81,5 +81,28 @@ final class Electron extends PhysicalObject{
 	@Override
 	public String getName() {
 		return "Electron";
+	}
+	
+	@Override
+	public PhysicalObject changeR(float newr) {
+		return new Electron(newr);
+	}
+}
+
+final class Kernel extends PhysicalObject{
+	private final String name;
+	
+	public Kernel(String name) {
+		super(0, 0);
+		this.name = name;
+	}
+	
+	public String getName() {
+		return name;
+	}
+	
+	@Override
+	public PhysicalObject changeR(float newr) {
+		throw new RuntimeException("changeR: center");
 	}
 }

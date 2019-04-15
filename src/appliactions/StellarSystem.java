@@ -45,7 +45,7 @@ public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
 					Planet p = new Planet(list[0], Enum.valueOf(Planet.Form.class, list[1]), list[2], Float.valueOf(list[3]),
 							Float.valueOf(list[4]), Double.valueOf(list[5]), Enum.valueOf(Planet.Dir.class, list[6]), Float.valueOf(list[7]));
 					addTrack(Float.valueOf(list[4]));
-					if(!addObject(Float.valueOf(list[4]), p))
+					if(!addObject(p))
 						System.out.println("warning: failed to add " + list[0]);
 					break;
 				}
@@ -57,12 +57,29 @@ public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
 	}
 }
 
-final class FixedStar{
-	public final String name;
+final class FixedStar extends PhysicalObject{
+	private final String name;
 	public final float r;
 	public final double m;
 	
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (!(o instanceof FixedStar)) return false;
+		if (!super.equals(o)) return false;
+		FixedStar fixedStar = (FixedStar) o;
+		return Float.compare(fixedStar.getR(), getR()) == 0 &&
+				Double.compare(fixedStar.m, m) == 0 &&
+				getName().equals(fixedStar.getName());
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), getName(), getR(), m);
+	}
+	
 	public FixedStar(String name, float r, double m) {
+		super(0, 0);
 		this.name = name;
 		this.r = r;
 		this.m = m;
@@ -70,17 +87,15 @@ final class FixedStar{
 	
 	
 	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		FixedStar fixedStar = (FixedStar) o;
-		return name.equals(fixedStar.name);
+	public String getName() {
+		return name;
 	}
 	
 	@Override
-	public int hashCode() {
-		return Objects.hash(name);
+	public PhysicalObject changeR(float newr) {
+		throw new RuntimeException("changeR: center");
 	}
+	
 }
 
 final class Planet extends PhysicalObject {
@@ -105,6 +120,11 @@ final class Planet extends PhysicalObject {
 	@Override
 	public String getName() {
 		return name;
+	}
+	
+	@Override
+	public PhysicalObject changeR(float newr) {
+		return new Planet(name, form, color, r, newr, v, v > 0? Dir.CCW : Dir.CW, getPos());
 	}
 	
 	enum Form{

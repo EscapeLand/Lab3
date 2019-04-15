@@ -33,4 +33,5 @@ public abstract class PhysicalObject {
 	}
 	
 	public abstract String getName();
+	public abstract PhysicalObject changeR(float newr);
 }

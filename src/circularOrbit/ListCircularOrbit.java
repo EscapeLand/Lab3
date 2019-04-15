@@ -4,7 +4,7 @@ import track.Track;
 
 import java.util.*;
 
-public class ListCircularOrbit<L, E extends PhysicalObject> extends ConcreteCircularOrbit<L, E> {
+public abstract class ListCircularOrbit<L extends PhysicalObject, E extends PhysicalObject> extends ConcreteCircularOrbit<L, E> {
 	private Map<Track<E>, List<E>> tracks = new TreeMap<>((o1, o2)->Float.compare(o1.R, o2.R));
 	
 	@Override
@@ -13,7 +13,8 @@ public class ListCircularOrbit<L, E extends PhysicalObject> extends ConcreteCirc
 	}
 	
 	@Override
-	public boolean addObject(float r, E newObject){
+	public boolean addObject(E newObject){
+		float r = newObject.getR();
 		List<E> re = tracks.get(Track.std(r));
 		if(re == null){
 			addTrack(r);

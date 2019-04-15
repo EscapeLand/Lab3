@@ -7,7 +7,7 @@ import graph.Graph;
 import java.util.*;
 
 public class CircularOrbitAPIs {
-	public static<L, E extends PhysicalObject> double getObjectDistributionEntropy(CircularOrbit<L, E> c){
+	public static<L extends PhysicalObject, E extends PhysicalObject> double getObjectDistributionEntropy(CircularOrbit<L, E> c){
 		Map<Float, Float> p = new HashMap<>();
 		int sum = 0;
 		for (E i : c) {
@@ -23,28 +23,28 @@ public class CircularOrbitAPIs {
 		return H;
 	}
 	
-	public static<L, E extends PhysicalObject> int getLogicalDistance (CircularOrbit<L, E> c, E a, E b){
-		Graph<Object> graph = c.getGraph();
+	public static<L extends PhysicalObject, E extends PhysicalObject> int getLogicalDistance (CircularOrbit<L, E> c, E a, E b){
+		Graph<PhysicalObject> graph = c.getGraph();
 		if(!graph.vertices().containsAll(Arrays.asList(a, b))) return -1;
 		if(a == b) return 0;
 		else{
-			Set<E> que = new HashSet<>();
+			Set<PhysicalObject> que = new HashSet<>();
 			int r = findNext(graph, a, b, que);
 			que.clear();
 			return r;
 		}
 	}
 	
-	private static<E extends PhysicalObject> int findNext(Graph<Object> graph, E a, E b, Set<E> que) {
+	private static<E extends PhysicalObject> int findNext(Graph<PhysicalObject> graph, E a, E b, Set<PhysicalObject> que) {
 		que.add(a);
-		Set<Object> next = graph.targets(a).keySet();
+		Set<PhysicalObject> next = graph.targets(a).keySet();
 		if(next.contains(b)) return que.size();
 		else {
 			Set<Integer> forcmp = new HashSet<>();
 			
-			for(Object i: next) {
-				if(que.contains((E) i)) continue;
-				int r = findNext(graph, (E) i, b, new HashSet<>(que));
+			for(PhysicalObject i: next) {
+				if(que.contains(i)) continue;
+				int r = findNext(graph, i, b, new HashSet<>(que));
 				if(r > 0) forcmp.add(r);
 			}
 			if(forcmp.isEmpty()) return -1;
@@ -52,11 +52,11 @@ public class CircularOrbitAPIs {
 		}
 	}
 	
-	public static<L, E extends PhysicalObject> double getPhysicalDistance (CircularOrbit<L, E> c, PhysicalObject e1, PhysicalObject e2){
+	public static<L extends PhysicalObject, E extends PhysicalObject> double getPhysicalDistance (CircularOrbit<L, E> c, PhysicalObject e1, PhysicalObject e2){
 		return oppositeSide(Math.abs(e1.getPos() - e2.getPos()), e1.getR(), e2.getR());
 	}
 	
-	public static<L, E extends PhysicalObject> Difference getDifference (CircularOrbit<L, E> c1, CircularOrbit<L, E> c2){
+	public static<L extends PhysicalObject, E extends PhysicalObject> Difference getDifference (CircularOrbit<L, E> c1, CircularOrbit<L, E> c2){
 		List<E> lc1 = new ArrayList<>();
 		List<E> lc2 = new ArrayList<>();
 		c1.forEach(lc1::add);

@@ -4,7 +4,7 @@ import track.Track;
 
 import java.util.*;
 
-public class SetCircularOrbit<L, E extends PhysicalObject> extends ConcreteCircularOrbit<L, E>{
+public abstract class SetCircularOrbit<L extends PhysicalObject, E extends PhysicalObject> extends ConcreteCircularOrbit<L, E>{
 	private Map<Track<E>, Set<E>> tracks = new TreeMap<>((o1, o2)->Float.compare(o1.R, o2.R));
 	
 	@Override
@@ -13,18 +13,15 @@ public class SetCircularOrbit<L, E extends PhysicalObject> extends ConcreteCircu
 	}
 	
 	@Override
-	public boolean addObject(float r, E newObject){
+	public boolean addObject(E newObject){
+		float r = newObject.getR();
 		Set<E> re = tracks.get(Track.std(r));
-		if(re == null){
-			addTrack(r);
-			Set<E> tmp = tracks.get(Track.std(r));
-			assert tmp != null;
-			tmp.add(newObject);
-			return null == tracks.put(new Track<>(r), tmp);
+		if(re == null) {
+			assert addTrack(r);
+			re = tracks.get(Track.std(r));
+			assert re != null;
 		}
-		else{
-			return re.add(newObject);
-		}
+		return re.add(newObject);
 	}
 	
 	@Override
