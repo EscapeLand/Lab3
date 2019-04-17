@@ -8,7 +8,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,28 +59,37 @@ public class AtomStructure extends ListCircularOrbit<Kernel, Electron> {
 		reader.close();
 		return true;
 	}
+	
+	@Override
+	public String toString() {
+		return "AtomStructure";
+	}
 }
 
 final class Electron extends PhysicalObject{
 	
-	public Electron(float r) {
+	Electron(float r) {
 		super(r, (float) (360 * Math.random()));
 	}
 	
 	@Override
+	public String toString() {
+		return super.toString().replace("PhysicalObject", "Electron");
+	}
+	
+	@Override
 	public boolean equals(Object that){
-		if(that instanceof Electron) return true;
-		else return false;
+		return that instanceof Electron;
 	}
 	
 	@Override
 	public int hashCode(){
-		return Objects.hash(getR(), "Electron");
+		return Objects.hash(getR(), "e");
 	}
 	
 	@Override
 	public String getName() {
-		return "Electron";
+		return "e";
 	}
 	
 	@Override
@@ -92,7 +101,7 @@ final class Electron extends PhysicalObject{
 final class Kernel extends PhysicalObject{
 	private final String name;
 	
-	public Kernel(String name) {
+	Kernel(String name) {
 		super(0, 0);
 		this.name = name;
 	}

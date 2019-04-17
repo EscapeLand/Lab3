@@ -5,13 +5,14 @@ import org.jetbrains.annotations.Nullable;
 import track.Track;
 
 import java.util.*;
-import java.util.function.Function;
+
+import static APIs.CircularOrbitAPIs.find_if;
 
 public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends PhysicalObject> implements CircularOrbit<L, E>{
 	private Graph<PhysicalObject> relationship = Graph.empty();
 	private L centre = null;
 	
-	abstract Map getTrack();
+	abstract <C extends Collection<E>> Map<Track<E>, C> getTrack();
 
 	@Override
 	public boolean removeTrack(float r){
@@ -55,14 +56,22 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		if(centre.getName().equals(name)) return centre;
 		for(var i: getTrack().values()){
 			assert i instanceof List || i instanceof Set;
-			E anIf = find_if((Collection<E>) i, name, PhysicalObject::getName);
+			E anIf = find_if(i, (p)-> Objects.equals(p.getName(), name));
 			if(anIf != null) return anIf;
 		}
 		return null;
 	}
 	
-	public static<E, Q> E find_if(Collection<E> col, Q value, Function<E, Q> pred){
-		for(E i: col) if(Objects.equals(value, pred.apply(i))) return i;
-		return null;
+	@Override
+	public L center() {
+		return centre;
+	}
+	
+	@Override
+	public Set<Float> getTracks() {
+		Set<Float> r = new TreeSet<>();
+		getTrack().keySet().forEach(t->r.add(t.R));
+		
+		return r;
 	}
 }

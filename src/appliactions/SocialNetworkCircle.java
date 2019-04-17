@@ -11,6 +11,8 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static APIs.CircularOrbitAPIs.find_if;
+
 public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, User> {
 	@Override
 	public boolean loadFromFile(String path) throws IOException {
@@ -37,7 +39,7 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 					changeCentre(new CentralUser(list[0], Integer.valueOf(list[1]), Enum.valueOf(Gender.class, list[2])));
 					break;
 				case "Friend":
-					Quad anIf = find_if(params, list[0], (Quad q) -> q.name);
+					Quad anIf = find_if(params, q -> Objects.equals(q.name, list[0]));
 					if(anIf == null){
 						params.add(new Quad(list[0], Integer.valueOf(list[1]), Enum.valueOf(Gender.class, list[2])));
 					}
@@ -61,13 +63,13 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 		do{
 			flag = false;
 			for(String[] list: record){
-				Quad anIf = list[0].equals(center) ? new Quad() : find_if(params, list[0], (Quad q) -> q.name);
+				Quad anIf = list[0].equals(center) ? new Quad() : find_if(params, q -> q.name.equals(list[0]));
 				if(anIf == null){
 					System.out.println("vertex not include: " + list[0]);
 					continue;
 				}
 				if(anIf.r == -1) continue;
-				Quad anIf2 = find_if(params, list[1], (Quad q) -> q.name);
+				Quad anIf2 = find_if(params, q -> q.name.equals(list[1]));
 				if(anIf2 == null){
 					System.out.println("vertex not include: " + list[0]);
 					continue;
@@ -78,7 +80,7 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 				}
 			}
 			if(!flag) break;
-		} while(null != find_if(params, -1, (Quad q)->q.r));
+		} while(null != find_if(params, q->q.r == -1));
 		
 		params.forEach(q->{assert addObject(q.toUser());});
 		
@@ -197,13 +199,13 @@ final class Quad{
 	int age;
 	Gender gender;
 	
-	public Quad(String name, int age, Gender gender) {
+	Quad(String name, int age, Gender gender) {
 		this.name = name;
 		this.age = age;
 		this.gender = gender;
 	}
 	
-	public Quad() { r = 0; }
+	Quad() { r = 0; }
 	
 	User toUser(){
 		return new User(r, name, age, gender);

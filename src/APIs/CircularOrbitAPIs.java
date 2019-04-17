@@ -5,6 +5,7 @@ import circularOrbit.PhysicalObject;
 import graph.Graph;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class CircularOrbitAPIs {
 	public static<L extends PhysicalObject, E extends PhysicalObject> double getObjectDistributionEntropy(CircularOrbit<L, E> c){
@@ -113,6 +114,13 @@ public class CircularOrbitAPIs {
 	
 	private static double oppositeSide(double includeAngle, double l1, double l2){
 		return Math.sqrt(l1 * l1 + l2 * l2 - 2 * l1 * l2 * Math.cos(includeAngle));
+	}
+	
+	public static <E> E find_if(Iterable<E> col, Predicate<E> pred){
+		for (E e : col) {
+			if(pred.test(e)) return e;
+		}
+		return null;
 	}
 }
 

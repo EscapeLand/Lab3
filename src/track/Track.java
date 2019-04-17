@@ -2,7 +2,9 @@ package track;
 
 import circularOrbit.PhysicalObject;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.Set;
 
 public class Track<E extends PhysicalObject> {
 	public final float R;

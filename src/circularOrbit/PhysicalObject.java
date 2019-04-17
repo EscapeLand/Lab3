@@ -20,6 +20,12 @@ public abstract class PhysicalObject {
 	}
 	
 	@Override
+	public String toString() {
+		return "PhysicalObject{" + R +
+				", " + pos + '}';
+	}
+	
+	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (!(o instanceof PhysicalObject)) return false;
@@ -35,3 +41,4 @@ public abstract class PhysicalObject {
 	public abstract String getName();
 	public abstract PhysicalObject changeR(float newr);
 }
+

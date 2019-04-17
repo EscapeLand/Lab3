@@ -55,6 +55,11 @@ public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
 		}
 		return true;
 	}
+	
+	@Override
+	public String toString() {
+		return "StellarSystem";
+	}
 }
 
 final class FixedStar extends PhysicalObject{
@@ -78,7 +83,7 @@ final class FixedStar extends PhysicalObject{
 		return Objects.hash(super.hashCode(), getName(), getR(), m);
 	}
 	
-	public FixedStar(String name, float r, double m) {
+	FixedStar(String name, float r, double m) {
 		super(0, 0);
 		this.name = name;
 		this.r = r;
@@ -134,16 +139,16 @@ final class Planet extends PhysicalObject {
 		CW, CCW
 	}
 	private final String name;
-	public final String color;
+	private final String color;
 	private final Form form;
 	public final float r;
-	public final double v;
+	private final double v;
 	
-	public Form getForm() {
+	private Form getForm() {
 		return form;
 	}
 	
-	public Planet(String name, Form form, String color, float r, float R, double v, Dir dir, Float pos) {
+	Planet(String name, Form form, String color, float r, float R, double v, Dir dir, Float pos) {
 		super(R, pos);
 		this.name = name;
 		this.color = color;
