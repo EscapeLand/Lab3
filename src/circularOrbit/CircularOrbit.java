@@ -1,8 +1,11 @@
 package circularOrbit;
 
 import graph.Graph;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -12,12 +15,14 @@ import java.util.Set;
  */
 public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObject> extends Iterable<E>{
 	/**
+	 * add a track.
 	 * @param r add a track with radius of r.
 	 * @return if a track with radius r has already exist, return false; else true.
 	 */
-	public boolean addTrack(float r);
+	public boolean addTrack(double r);
 	
 	/**
+	 * remove a track, and apparently the objects on the tract are removed together.
 	 * @param r the track with radius r to remove
 	 * @return if a track with radius r has already exist, return true. else false.
 	 */
@@ -27,19 +32,19 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	 * @param newCenter change the center object to newObject.
 	 * @return the previous center object.
 	 */
-	public L changeCentre(L newCenter);
+	public L changeCentre(@Nullable L newCenter);
 	
 	/**
 	 * @param newObject add a object to circular orbit.
 	 * @return if the object has already exist, return false; else true.
 	 */
-	public boolean addObject(E newObject);
+	public boolean addObject(@NotNull E newObject);
 	
 	/**
 	 * @param obj remove a object from circular orbit.
 	 * @return if the object has already exist, return true; else false.
 	 */
-	public boolean removeObject(E obj);
+	public boolean removeObject(@NotNull E obj);
 	
 	/**
 	 * @param a begin of relation.
@@ -52,7 +57,7 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	/**
 	 * @return return the relation graph of the circular orbit.
 	 */
-	public Graph<PhysicalObject> getGraph();
+	public @NotNull Graph<PhysicalObject> getGraph();
 	
 	/**
 	 * @param path infers a text file with regulated input.
@@ -62,6 +67,7 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	public boolean loadFromFile(String path) throws IOException;
 	
 	/**
+	 * find a object with its name.
 	 * @param name name of the object, either L or E.
 	 * @return the object.
 	 */
@@ -70,11 +76,19 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	/**
 	 * @return all the tracks in circular orbit.
 	 */
-	public Set<Float> getTracks();
+	public Set<Double> getTracks();
+	
+	/**
+	 * @param r the radius of the track
+	 * @return copy of the collection in which objects are on the given track.
+	 */
+	@Nullable
+	public Collection<E> getObjectsOnTrack(double r);
 	
 	/**
 	 * @return the center object.
 	 */
+	@Nullable
 	public L center();
 	
 	Iterator<E> iterator();

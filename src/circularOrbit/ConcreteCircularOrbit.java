@@ -1,7 +1,7 @@
 package circularOrbit;
 
 import graph.Graph;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import track.Track;
 
 import java.util.*;
@@ -26,7 +26,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		return prev;
 	}
 	
-	boolean findTrack(float r){
+	boolean findTrack(double r){
 		return getTrack().containsKey(Track.std(r));
 	}
 	
@@ -41,7 +41,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	}
 	
 	@Override
-	public boolean addRelation(PhysicalObject a, PhysicalObject b, float val){
+	public boolean addRelation(@NotNull PhysicalObject a, @NotNull PhysicalObject b, float val){
 		relationship.add(a);
 		relationship.add(b);
 		return 0 == relationship.set(a, b, val) && 0 ==relationship.set(b, a, val);
@@ -51,7 +51,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		return relationship;
 	}
 	
-	@Override @Nullable
+	@Override
 	public PhysicalObject query(String name){
 		if(centre.getName().equals(name)) return centre;
 		for(var i: getTrack().values()){
@@ -68,8 +68,13 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	}
 	
 	@Override
-	public Set<Float> getTracks() {
-		Set<Float> r = new TreeSet<>();
+	public Collection<E> getObjectsOnTrack(double r) {
+		return getTrack().get(Track.std(r));
+	}
+	
+	@Override
+	public Set<Double> getTracks() {
+		Set<Double> r = new TreeSet<>();
 		getTrack().keySet().forEach(t->r.add(t.R));
 		
 		return r;

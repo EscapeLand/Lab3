@@ -7,6 +7,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,16 +40,18 @@ public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
 				}
 				case "Planet":
 				{
-					String[] list = m.group(2).split(",");
-					if(list.length != 8){
+					List<String> list = new ArrayList<>(Arrays.asList(m.group(2).split(",")));
+					if(list.size() != 8){
 						System.out.println("warning: regex: Planet: not 8 args. continued. ");
 						continue;
 					}
-					Planet p = new Planet(list[0], Enum.valueOf(Planet.Form.class, list[1]), list[2], Float.valueOf(list[3]),
-							Float.valueOf(list[4]), Double.valueOf(list[5]), Enum.valueOf(Planet.Dir.class, list[6]), Float.valueOf(list[7]));
-					addTrack(Float.valueOf(list[4]));
-					if(!addObject(p))
-						System.out.println("warning: failed to add " + list[0]);
+					list.add(0, "Planet");
+//					Planet p = new Planet(list[0], Enum.valueOf(Planet.Form.class, list[1]), list[2], Float.valueOf(list[3]),
+//							Float.valueOf(list[4]), Double.valueOf(list[5]), Enum.valueOf(Planet.Dir.class, list[6]), Float.valueOf(list[7]));
+					PhysicalObject p = PhysicalObjectFactory.produce(list.toArray(new String[0]));
+					assert p instanceof Planet;
+					if(!addObject((Planet) p))
+						System.out.println("warning: failed to add " + list.get(1));
 					break;
 				}
 				default:
@@ -59,6 +64,12 @@ public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
 	@Override
 	public String toString() {
 		return "StellarSystem";
+	}
+	
+	public static PhysicalObject nextTime(PhysicalObject p, float time){
+		if(p instanceof FixedStar) return p;
+		assert p instanceof Planet;
+		return ((Planet) p).nextTime(time);
 	}
 }
 
@@ -73,7 +84,7 @@ final class FixedStar extends PhysicalObject{
 		if (!(o instanceof FixedStar)) return false;
 		if (!super.equals(o)) return false;
 		FixedStar fixedStar = (FixedStar) o;
-		return Float.compare(fixedStar.getR(), getR()) == 0 &&
+		return Double.compare(fixedStar.getR(), getR()) == 0 &&
 				Double.compare(fixedStar.m, m) == 0 &&
 				getName().equals(fixedStar.getName());
 	}
@@ -97,20 +108,32 @@ final class FixedStar extends PhysicalObject{
 	}
 	
 	@Override
-	public PhysicalObject changeR(float newr) {
+	public PhysicalObject changeR(double newr) {
 		throw new RuntimeException("changeR: center");
 	}
-	
 }
 
 final class Planet extends PhysicalObject {
+	private final String name;
+	private final String color;
+	private final Form form;
+	public final double r;
+	private final double v;
+	
+	enum Form{
+		Solid, Liquid, Gas
+	}
+	enum Dir{
+		CW, CCW
+	}
+	
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
 		if (!(o instanceof Planet)) return false;
 		if (!super.equals(o)) return false;
 		Planet planet = (Planet) o;
-		return Float.compare(planet.getR(), getR()) == 0 &&
+		return Double.compare(planet.getR(), getR()) == 0 &&
 				Double.compare(planet.v, v) == 0 &&
 				name.equals(planet.name) &&
 				color.equals(planet.color) &&
@@ -128,32 +151,25 @@ final class Planet extends PhysicalObject {
 	}
 	
 	@Override
-	public PhysicalObject changeR(float newr) {
+	public PhysicalObject changeR(double newr) {
 		return new Planet(name, form, color, r, newr, v, v > 0? Dir.CCW : Dir.CW, getPos());
 	}
 	
-	enum Form{
-		Solid, Liquid, Gas
+	public PhysicalObject nextTime(float time) {
+		return new Planet(name, form, color, r, getR(), v,
+				v > 0? Dir.CCW : Dir.CW, (float) (getPos() + v * time));
 	}
-	enum Dir{
-		CW, CCW
-	}
-	private final String name;
-	private final String color;
-	private final Form form;
-	public final float r;
-	private final double v;
 	
 	private Form getForm() {
 		return form;
 	}
 	
-	Planet(String name, Form form, String color, float r, float R, double v, Dir dir, Float pos) {
+	Planet(String name, Form form, String color, double r, double R, double v, Dir dir, double pos) {
 		super(R, pos);
 		this.name = name;
 		this.color = color;
 		this.form = form;
 		this.r = r;
-		this.v = dir == Dir.CCW ? v : -v;
+		this.v = (dir == Dir.CW ? -1 : 1) * Math.abs(v / R);
 	}
 }

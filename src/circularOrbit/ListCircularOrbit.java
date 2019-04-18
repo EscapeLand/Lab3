@@ -5,16 +5,16 @@ import track.Track;
 import java.util.*;
 
 public abstract class ListCircularOrbit<L extends PhysicalObject, E extends PhysicalObject> extends ConcreteCircularOrbit<L, E> {
-	private Map<Track<E>, List<E>> tracks = new TreeMap<>((o1, o2)->Float.compare(o1.R, o2.R));
+	private Map<Track<E>, List<E>> tracks = new TreeMap<>(Comparator.comparingDouble(o -> o.R));
 	
 	@Override
-	public boolean addTrack(float r){
+	public boolean addTrack(double r){
 		return !findTrack(r) && null == tracks.put(new Track<>(r), new ArrayList<>());
 	}
 	
 	@Override
 	public boolean addObject(E newObject){
-		float r = newObject.getR();
+		double r = newObject.getR();
 		List<E> re = tracks.get(Track.std(r));
 		if(re == null){
 			addTrack(r);

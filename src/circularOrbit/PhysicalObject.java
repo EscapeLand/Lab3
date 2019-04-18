@@ -3,19 +3,19 @@ package circularOrbit;
 import java.util.Objects;
 
 public abstract class PhysicalObject {
-	private final float R;
-	private final float pos;
+	private final double R;
+	private final double pos;
 	
-	public PhysicalObject(float r, float pos) {
+	public PhysicalObject(double r, double pos) {
 		R = r;
 		this.pos = pos;
 	}
 	
-	public final float getR() {
+	public final double getR() {
 		return R;
 	}
 	
-	public final float getPos() {
+	public final double getPos() {
 		return pos;
 	}
 	
@@ -30,7 +30,7 @@ public abstract class PhysicalObject {
 		if (this == o) return true;
 		if (!(o instanceof PhysicalObject)) return false;
 		PhysicalObject that = (PhysicalObject) o;
-		return Float.compare(that.getR(), getR()) == 0;
+		return Double.compare(that.getR(), getR()) == 0;
 	}
 	
 	@Override
@@ -39,6 +39,6 @@ public abstract class PhysicalObject {
 	}
 	
 	public abstract String getName();
-	public abstract PhysicalObject changeR(float newr);
+	public abstract PhysicalObject changeR(double newr);
 }
 

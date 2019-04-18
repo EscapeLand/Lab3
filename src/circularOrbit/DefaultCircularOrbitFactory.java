@@ -1,9 +1,8 @@
-package factory;
+package circularOrbit;
 
 import appliactions.AtomStructure;
 import appliactions.SocialNetworkCircle;
 import appliactions.StellarSystem;
-import circularOrbit.CircularOrbit;
 
 import java.io.IOException;
 

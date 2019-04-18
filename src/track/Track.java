@@ -7,9 +7,9 @@ import java.util.Objects;
 import java.util.Set;
 
 public class Track<E extends PhysicalObject> {
-	public final float R;
+	public final Double R;
 	
-	public Track(float R){
+	public Track(Double R){
 		this.R = R;
 	}
 	
@@ -18,7 +18,7 @@ public class Track<E extends PhysicalObject> {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		Track<?> track = (Track<?>) o;
-		return Float.compare(track.R, R) == 0;
+		return Double.compare(track.R, R) == 0;
 	}
 	
 	@Override
@@ -35,7 +35,7 @@ public class Track<E extends PhysicalObject> {
 		return orbit.remove(obj);
 	}
 	
-	public static<E extends PhysicalObject> Track<E> std(float R){
+	public static<E extends PhysicalObject> Track<E> std(double R){
 		return new Track<>(R);
 	}
 }

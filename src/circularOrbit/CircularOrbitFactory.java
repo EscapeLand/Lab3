@@ -1,6 +1,4 @@
-package factory;
-
-import circularOrbit.CircularOrbit;
+package circularOrbit;
 
 import java.io.IOException;
 

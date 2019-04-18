@@ -28,29 +28,30 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 				System.out.println("warning: regex: group count != 2, continued. ");
 				continue;
 			}
-			String[] list = m.group(2).split("\\s*,\\s*");
-			if(list.length != 3){
+			List<String> list = new ArrayList<>(Arrays.asList(m.group(2).split("\\s*,\\s*")));
+			if(list.size() != 3){
 				System.out.println("warning: regex: not 3 args. continued. ");
 				continue;
 			}
 			switch (m.group(1)){
 				case "CentralUser":
-					center = list[0];
-					changeCentre(new CentralUser(list[0], Integer.valueOf(list[1]), Enum.valueOf(Gender.class, list[2])));
+					center = list.get(0);
+					list.add(0, "CentralUser");
+					changeCentre((CentralUser) PhysicalObjectFactory.produce(list.toArray(new String[0])));
 					break;
 				case "Friend":
-					Quad anIf = find_if(params, q -> Objects.equals(q.name, list[0]));
+					Quad anIf = find_if(params, q -> Objects.equals(q.name, list.get(0)));
 					if(anIf == null){
-						params.add(new Quad(list[0], Integer.valueOf(list[1]), Enum.valueOf(Gender.class, list[2])));
+						params.add(new Quad(list.get(0), Integer.valueOf(list.get(1)), Enum.valueOf(Gender.class, list.get(2))));
 					}
 					else{
-						anIf.name = list[0];
-						anIf.age = Integer.valueOf(list[1]);
-						anIf.gender = Enum.valueOf(Gender.class, list[2]);
+						anIf.name = list.get(0);
+						anIf.age = Integer.valueOf(list.get(1));
+						anIf.gender = Enum.valueOf(Gender.class, list.get(2));
 					}
 					break;
 				case "SocialTie":
-					record.add(list);
+					record.add(list.toArray(new String[0]));
 					break;
 				default:
 					System.out.println("warning: regex: unexpected key: " + m.group(1));
@@ -93,6 +94,11 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 		
 		return true;
 	}
+	
+	@Override
+	public String toString() {
+		return "SocialNetworkCircle";
+	}
 }
 
 enum Gender{
@@ -100,8 +106,8 @@ enum Gender{
 }
 
 final class User extends PhysicalObject {
-	User(float r, String name, int age, Gender gender) {
-		super(r, ((float) (360 * Math.random())));
+	User(Double r, String name, int age, Gender gender) {
+		super(r, 360 * Math.random());
 		this.Name = name;
 		this.gender = gender;
 		this.age = age;
@@ -142,7 +148,7 @@ final class User extends PhysicalObject {
 	}
 	
 	@Override
-	public PhysicalObject changeR(float newr) {
+	public PhysicalObject changeR(double newr) {
 		return new User(newr, Name, age, gender);
 	}
 	
@@ -172,7 +178,7 @@ final class CentralUser extends PhysicalObject{
 	}
 	
 	@Override
-	public PhysicalObject changeR(float newr) {
+	public PhysicalObject changeR(double newr) {
 		throw new RuntimeException("changeR: center");
 	}
 	
@@ -208,7 +214,7 @@ final class Quad{
 	Quad() { r = 0; }
 	
 	User toUser(){
-		return new User(r, name, age, gender);
+		return new User(((double) r), name, age, gender);
 	}
 	
 	@Override

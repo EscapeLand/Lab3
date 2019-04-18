@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 
 public class CircularOrbitAPIs {
 	public static<L extends PhysicalObject, E extends PhysicalObject> double getObjectDistributionEntropy(CircularOrbit<L, E> c){
-		Map<Float, Float> p = new HashMap<>();
+		Map<Double, Float> p = new HashMap<>();
 		int sum = 0;
 		for (E i : c) {
 			Float tmp = p.get(i.getR());
@@ -17,7 +17,7 @@ public class CircularOrbitAPIs {
 			p.put(i.getR(), tmp + 1.0f);
 			sum++;
 		}
-		for(Map.Entry<Float, Float> i: p.entrySet()) p.put(i.getKey(), i.getValue() / sum);
+		for(Map.Entry<Double, Float> i: p.entrySet()) p.put(i.getKey(), i.getValue() / sum);
 		
 		float H = 0;
 		for(Float i: p.values()) H -= i * Math.log(i);
@@ -63,8 +63,8 @@ public class CircularOrbitAPIs {
 		c1.forEach(lc1::add);
 		c2.forEach(lc2::add);
 		
-		Map<Float, Integer> Rc1 = new TreeMap<>(Float::compare);
-		Map<Float, Integer> Rc2 = new TreeMap<>(Float::compare);
+		Map<Double, Integer> Rc1 = new TreeMap<>(Double::compare);
+		Map<Double, Integer> Rc2 = new TreeMap<>(Double::compare);
 		
 		lc1.forEach(x->Rc1.put(x.getR(), Rc1.get(x.getR()) == null ? 1 : Rc1.get(x.getR()) + 1));
 		lc2.forEach(x->Rc2.put(x.getR(), Rc2.get(x.getR()) == null ? 1 : Rc2.get(x.getR()) + 1));
@@ -80,8 +80,8 @@ public class CircularOrbitAPIs {
 					Ic1.hasNext() ? Ic1.next() : -Ic2.next();
 		}
 		
-		Map<Float, Set<E>> OBJDif1 = new TreeMap<>(Float::compare);
-		Map<Float, Set<E>> OBJDif2 = new TreeMap<>(Float::compare);
+		Map<Double, Set<E>> OBJDif1 = new TreeMap<>(Double::compare);
+		Map<Double, Set<E>> OBJDif2 = new TreeMap<>(Double::compare);
 		
 		for (E e : lc1) {
 			if(!lc2.contains(e)) {
