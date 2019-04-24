@@ -1,11 +1,12 @@
 package circularOrbit;
 
+import org.jetbrains.annotations.NotNull;
 import track.Track;
 
 import java.util.*;
 
 public abstract class ListCircularOrbit<L extends PhysicalObject, E extends PhysicalObject> extends ConcreteCircularOrbit<L, E> {
-	private Map<Track<E>, List<E>> tracks = new TreeMap<>(Comparator.comparingDouble(o -> o.R));
+	protected Map<Track<E>, List<E>> tracks = new TreeMap<>(Comparator.comparingDouble(o -> o.R));
 	
 	@Override
 	public boolean addTrack(double r){
@@ -13,7 +14,7 @@ public abstract class ListCircularOrbit<L extends PhysicalObject, E extends Phys
 	}
 	
 	@Override
-	public boolean addObject(E newObject){
+	public boolean addObject(@NotNull E newObject){
 		double r = newObject.getR();
 		List<E> re = tracks.get(Track.std(r));
 		if(re == null){
@@ -29,12 +30,18 @@ public abstract class ListCircularOrbit<L extends PhysicalObject, E extends Phys
 	}
 	
 	@Override
+	public List<E> getObjectsOnTrack(double r) {
+		return new ArrayList<>(tracks.get(Track.std(r)));
+	}
+	
+	@NotNull
+	@Override
 	public Iterator<E> iterator() {
 		return new iter();
 	}
 	
 	@Override
-	Map<Track<E>, List<E>> getTrack() {
+	protected Map<Track<E>, List<E>> getTrack() {
 		return tracks;
 	}
 	

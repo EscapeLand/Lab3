@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,7 +19,7 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 	public boolean loadFromFile(String path) throws IOException {
 		File file = new File(path);
 		BufferedReader reader = new BufferedReader(new FileReader(file));
-		List<Quad> params = new ArrayList<>();
+		List<User> params = new ArrayList<>();
 		Set<String[]> record = new HashSet<>();
 		String center = null;
 		for(String buffer = reader.readLine(); buffer != null; buffer = reader.readLine()) {
@@ -40,15 +41,8 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 					changeCentre((CentralUser) PhysicalObjectFactory.produce(list.toArray(new String[0])));
 					break;
 				case "Friend":
-					Quad anIf = find_if(params, q -> Objects.equals(q.name, list.get(0)));
-					if(anIf == null){
-						params.add(new Quad(list.get(0), Integer.valueOf(list.get(1)), Enum.valueOf(Gender.class, list.get(2))));
-					}
-					else{
-						anIf.name = list.get(0);
-						anIf.age = Integer.valueOf(list.get(1));
-						anIf.gender = Enum.valueOf(Gender.class, list.get(2));
-					}
+					params.add(new User(list.get(0), Integer.valueOf(list.get(1)),
+							Enum.valueOf(Gender.class, list.get(2))));
 					break;
 				case "SocialTie":
 					record.add(list.toArray(new String[0]));
@@ -64,26 +58,27 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 		do{
 			flag = false;
 			for(String[] list: record){
-				Quad anIf = list[0].equals(center) ? new Quad() : find_if(params, q -> q.name.equals(list[0]));
+				User anIf = list[0].equals(center) ? new User(0.0, "", 0, null) :
+						find_if(params, q -> q.getName().equals(list[0]));
 				if(anIf == null){
 					System.out.println("vertex not include: " + list[0]);
 					continue;
 				}
-				if(anIf.r == -1) continue;
-				Quad anIf2 = find_if(params, q -> q.name.equals(list[1]));
+				if(anIf.getR() == -1) continue;
+				User anIf2 = find_if(params, q -> q.getName().equals(list[1]));
 				if(anIf2 == null){
 					System.out.println("vertex not include: " + list[0]);
 					continue;
 				}
-				if(anIf2.r == -1 || anIf2.r > anIf.r + 1){
+				if(anIf2.getR() == -1 || anIf2.getR() > anIf.getR() + 1){
 					flag = true;
-					anIf2.r = anIf.r + 1;
+					anIf2.setR(anIf.getR() + 1);
 				}
 			}
 			if(!flag) break;
-		} while(null != find_if(params, q->q.r == -1));
+		} while(null != find_if(params, q->q.getR() == -1));
 		
-		params.forEach(q->{assert addObject(q.toUser());});
+		params.forEach(this::addObject);
 		
 		for (String[] list : record) {
 			PhysicalObject q1 = query(list[0]);
@@ -96,8 +91,13 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 	}
 	
 	@Override
-	public String toString() {
-		return "SocialNetworkCircle";
+	public void process(Consumer end) {
+	
+	}
+	
+	@Override
+	protected String[] hintForUser() {
+		return PhysicalObjectFactory.hint_User;
 	}
 }
 
@@ -106,9 +106,18 @@ enum Gender{
 }
 
 final class User extends PhysicalObject {
+	private final Gender gender;
+	private final int age;
+	
 	User(Double r, String name, int age, Gender gender) {
-		super(r, 360 * Math.random());
-		this.Name = name;
+		super(name, r, 360 * Math.random());
+		this.gender = gender;
+		this.age = age;
+	}
+	
+	User(String name, int age, Gender gender) {
+		super(name);
+		setPos(360 * Math.random());
 		this.gender = gender;
 		this.age = age;
 	}
@@ -128,33 +137,17 @@ final class User extends PhysicalObject {
 		if (!super.equals(o)) return false;
 		User user = (User) o;
 		return getAge() == user.getAge() &&
-				getName().equals(user.getName()) &&
 				getGender() == user.getGender();
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), getName(), getGender(), getAge());
-	}
-	
-	private final String Name;
-	private final Gender gender;
-	private final int age;
-
-	
-	@Override
-	public String getName() {
-		return Name;
-	}
-	
-	@Override
-	public PhysicalObject changeR(double newr) {
-		return new User(newr, Name, age, gender);
+		return Objects.hash(super.hashCode(), getGender(), getAge());
 	}
 	
 	@Override
 	public String toString() {
-		return "<" + Name +
+		return "<" + getName() +
 				", " + age +
 				", " + gender.toString() +
 				'>';
@@ -162,24 +155,13 @@ final class User extends PhysicalObject {
 }
 
 final class CentralUser extends PhysicalObject{
-	private final String Name;
 	private final Gender gender;
 	private final int age;
 	
 	CentralUser(String name, int age, Gender gender) {
-		super(0, 0);
-		Name = name;
+		super(name, 0, 0);
 		this.gender = gender;
 		this.age = age;
-	}
-	
-	public String getName() {
-		return Name;
-	}
-	
-	@Override
-	public PhysicalObject changeR(double newr) {
-		throw new RuntimeException("changeR: center");
 	}
 	
 	public Gender getGender() {
@@ -192,43 +174,9 @@ final class CentralUser extends PhysicalObject{
 	
 	@Override
 	public String toString() {
-		return "<" + Name +
+		return "<" + getName() +
 				", " + age +
 				", " + gender.toString() +
 				'>';
-	}
-}
-
-final class Quad{
-	int r = -1;
-	String name;
-	int age;
-	Gender gender;
-	
-	Quad(String name, int age, Gender gender) {
-		this.name = name;
-		this.age = age;
-		this.gender = gender;
-	}
-	
-	Quad() { r = 0; }
-	
-	User toUser(){
-		return new User(((double) r), name, age, gender);
-	}
-	
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (!(o instanceof Quad)) return false;
-		Quad quad = (Quad) o;
-		return age == quad.age &&
-				name.equals(quad.name) &&
-				gender == quad.gender;
-	}
-	
-	@Override
-	public int hashCode() {
-		return Objects.hash(name, age, gender);
 	}
 }

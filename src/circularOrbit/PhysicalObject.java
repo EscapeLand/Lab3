@@ -1,22 +1,37 @@
 package circularOrbit;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 public abstract class PhysicalObject {
-	private final double R;
-	private final double pos;
+	private final String name;
+	private double R = -1;
+	private double pos = 0;
 	
-	public PhysicalObject(double r, double pos) {
-		R = r;
+	public PhysicalObject(String name, double r, double pos) {
+		this.name = name;
+		this.R = r;
 		this.pos = pos;
+	}
+	
+	public PhysicalObject(String name) {
+		this.name = name;
 	}
 	
 	public final double getR() {
 		return R;
 	}
 	
+	public void setR(double r) { R = r; }
+	
 	public final double getPos() {
 		return pos;
+	}
+	
+	public void setPos(double pos) { this.pos = pos; }
+	
+	public String getName(){
+		return name;
 	}
 	
 	@Override
@@ -30,15 +45,17 @@ public abstract class PhysicalObject {
 		if (this == o) return true;
 		if (!(o instanceof PhysicalObject)) return false;
 		PhysicalObject that = (PhysicalObject) o;
-		return Double.compare(that.getR(), getR()) == 0;
+		return getName().equals(that.getName());
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(getR());
+		return Objects.hash(getName());
 	}
 	
-	public abstract String getName();
-	public abstract PhysicalObject changeR(double newr);
+	public static Comparator<PhysicalObject> getDefaultComparator(){
+		return (o1, o2) -> o1.R < o2.R ? 1 :
+				o1.R > o2.R ? -1: Double.compare(o1.pos, o2.pos);
+	}
 }
 

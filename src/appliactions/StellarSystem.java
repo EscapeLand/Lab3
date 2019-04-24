@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,8 +47,6 @@ public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
 						continue;
 					}
 					list.add(0, "Planet");
-//					Planet p = new Planet(list[0], Enum.valueOf(Planet.Form.class, list[1]), list[2], Float.valueOf(list[3]),
-//							Float.valueOf(list[4]), Double.valueOf(list[5]), Enum.valueOf(Planet.Dir.class, list[6]), Float.valueOf(list[7]));
 					PhysicalObject p = PhysicalObjectFactory.produce(list.toArray(new String[0]));
 					assert p instanceof Planet;
 					if(!addObject((Planet) p))
@@ -62,19 +61,21 @@ public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
 	}
 	
 	@Override
-	public String toString() {
-		return "StellarSystem";
+	public void process(Consumer end) {
+	
 	}
 	
-	public static PhysicalObject nextTime(PhysicalObject p, float time){
-		if(p instanceof FixedStar) return p;
-		assert p instanceof Planet;
-		return ((Planet) p).nextTime(time);
+	public void nextTime(double time){
+		forEach(p->p.nextTime(time));
+	}
+	
+	@Override
+	protected String[] hintForUser() {
+		return PhysicalObjectFactory.hint_Planet;
 	}
 }
 
 final class FixedStar extends PhysicalObject{
-	private final String name;
 	public final float r;
 	public final double m;
 	
@@ -95,26 +96,13 @@ final class FixedStar extends PhysicalObject{
 	}
 	
 	FixedStar(String name, float r, double m) {
-		super(0, 0);
-		this.name = name;
+		super(name, 0, 0);
 		this.r = r;
 		this.m = m;
-	}
-	
-	
-	@Override
-	public String getName() {
-		return name;
-	}
-	
-	@Override
-	public PhysicalObject changeR(double newr) {
-		throw new RuntimeException("changeR: center");
 	}
 }
 
 final class Planet extends PhysicalObject {
-	private final String name;
 	private final String color;
 	private final Form form;
 	public final double r;
@@ -135,29 +123,18 @@ final class Planet extends PhysicalObject {
 		Planet planet = (Planet) o;
 		return Double.compare(planet.getR(), getR()) == 0 &&
 				Double.compare(planet.v, v) == 0 &&
-				name.equals(planet.name) &&
+				getName().equals(planet.getName()) &&
 				color.equals(planet.color) &&
 				getForm() == planet.getForm();
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), name, color, getForm(), getR(), v);
+		return Objects.hash(super.hashCode(), getName(), color, getForm(), getR(), v);
 	}
 	
-	@Override
-	public String getName() {
-		return name;
-	}
-	
-	@Override
-	public PhysicalObject changeR(double newr) {
-		return new Planet(name, form, color, r, newr, v, v > 0? Dir.CCW : Dir.CW, getPos());
-	}
-	
-	public PhysicalObject nextTime(float time) {
-		return new Planet(name, form, color, r, getR(), v,
-				v > 0? Dir.CCW : Dir.CW, (float) (getPos() + v * time));
+	void nextTime(double time) {
+		setPos(getPos() + v * time);
 	}
 	
 	private Form getForm() {
@@ -165,8 +142,7 @@ final class Planet extends PhysicalObject {
 	}
 	
 	Planet(String name, Form form, String color, double r, double R, double v, Dir dir, double pos) {
-		super(R, pos);
-		this.name = name;
+		super(name, R, pos);
 		this.color = color;
 		this.form = form;
 		this.r = r;

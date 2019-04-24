@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * @param <L> center object type.
@@ -26,7 +27,7 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	 * @param r the track with radius r to remove
 	 * @return if a track with radius r has already exist, return true. else false.
 	 */
-	public boolean removeTrack(float r);
+	public boolean removeTrack(Double r);
 	
 	/**
 	 * @param newCenter change the center object to newObject.
@@ -39,6 +40,14 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	 * @return if the object has already exist, return false; else true.
 	 */
 	public boolean addObject(@NotNull E newObject);
+	
+	/**
+	 * @param obj which to move.
+	 * @param from move from. -1, or other positive double.
+	 * @param to move to. -1, or other positive double.
+	 * @return true if success, false if no track has radius equals to from or to.
+	 */
+	public boolean moveObject(E obj, double from, double to);
 	
 	/**
 	 * @param obj remove a object from circular orbit.
@@ -91,5 +100,20 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	@Nullable
 	public L center();
 	
-	Iterator<E> iterator();
+	/**
+	 * @param from transit from.
+	 * @param to transit to.
+	 * @param number how many electrons to transit.
+	 * @apiNote only AtomStructure can transit.
+	 * @return true if success.
+	 */
+	public boolean transit(double from, double to, int number);
+	
+	@NotNull Iterator<E> iterator();
+	
+	/**
+	 * process user operation.
+	 * @param end what to do when end operation. (must be CircularOrbitHelper.refresh)
+	 */
+	public void process(Consumer<CircularOrbit> end);
 }

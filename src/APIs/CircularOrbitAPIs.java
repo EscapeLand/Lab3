@@ -3,8 +3,15 @@ package APIs;
 import circularOrbit.CircularOrbit;
 import circularOrbit.PhysicalObject;
 import graph.Graph;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.*;
+import java.util.List;
 import java.util.function.Predicate;
 
 public class CircularOrbitAPIs {
@@ -116,11 +123,85 @@ public class CircularOrbitAPIs {
 		return Math.sqrt(l1 * l1 + l2 * l2 - 2 * l1 * l2 * Math.cos(includeAngle));
 	}
 	
+	@Nullable
 	public static <E> E find_if(Iterable<E> col, Predicate<E> pred){
 		for (E e : col) {
 			if(pred.test(e)) return e;
 		}
 		return null;
+	}
+	
+	@NotNull
+	public static String prompt(@Nullable JFrame owner, String title, String msg){
+		StringBuffer p = new StringBuffer();
+		class promptDialog extends JDialog{
+			private promptDialog(){
+				super(owner, title);
+				setBounds(400,200,368,128);
+				Container panel = getContentPane();
+				panel.setLayout(null);
+				JLabel lbl; JTextField txt; JButton btn;
+				panel.add(lbl = new JLabel(msg));
+				panel.add(txt = new JTextField());
+				panel.add(btn = new JButton("OK"));
+				
+				lbl.setBounds(8, 8, 256, 24);
+				txt.setBounds(8, 40, 256, 24);
+				btn.setBounds(288, 40, 56, 24);
+				
+				btn.addActionListener(e -> {
+					p.append(txt.getText());
+					this.dispose();
+				});
+				setModal(true);
+			}
+		}
+		var dialog = new promptDialog();
+		dialog.setVisible(true);
+		return p.toString();
+	}
+	
+	public static String[] promptForm(@Nullable JFrame owner, String title, @NotNull String[] form){
+		JTextField[] formArray = new JTextField[form.length];
+		String[] input = new String[form.length];
+		
+		class promptDialog extends JDialog{
+			private promptDialog(){
+				super(owner, title);
+				int y = 8;
+				Container panel = getContentPane();
+				panel.setLayout(null);
+				
+				for (int i = 0; i < form.length; i++) {
+					JLabel lbl;
+					panel.add(lbl = new JLabel(form[i]));
+					panel.add(formArray[i] = new JTextField());
+					lbl.setBounds(8, y, 256, 24);
+					y += 32;
+					formArray[i].setBounds(8, y, 256, 24);
+					y += 32;
+				}
+				
+				JButton btn= new JButton("OK");
+				panel.add(btn);
+				btn.setBounds(200, y, 56, 24);
+				setBounds(400,200,292,y + 68);
+				
+				btn.addActionListener(e -> {
+					for (int i = 0; i < formArray.length; i++) {
+						input[i] = formArray[i].getText();
+					}
+					this.dispose();
+				});
+				setModal(true);
+			}
+		}
+		promptDialog dialog = new promptDialog();
+		dialog.setVisible(true);
+		return input;
+	}
+	public static void alert(@Nullable JFrame owner, String title, String msg){
+		JOptionPane.showMessageDialog(owner, msg, title, JOptionPane.ERROR_MESSAGE);
 	}
 }
 

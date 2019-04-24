@@ -23,7 +23,8 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 	private double scale;
 	private double length;
 	private Map<Double, Double> Rs = new TreeMap<>(Double::compare);
-	private Map<PhysicalObject, Object> cells = new HashMap<>();
+	private Map<PhysicalObject, Object> cells = new TreeMap<>(PhysicalObject.getDefaultComparator());
+	private Set<Object> circles = new HashSet<>();
 	
 	private CircularOrbitHelper(@NotNull CircularOrbit<L, E> c, int length)
 	{
@@ -34,19 +35,42 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		mxGraphComponent graphComponent = new mxGraphComponent(graph);
 		getContentPane().add(graphComponent);
 		
+		refresh(c);
+	}
+	
+	public static<L extends PhysicalObject, E extends PhysicalObject> void visualize(CircularOrbit<L, E> c){
+		CircularOrbitHelper<L, E> frame = new CircularOrbitHelper<>(c, 800);
+		if(c instanceof StellarSystem) {
+			Thread t = new Thread(() -> frame.run((StellarSystem) c));
+			t.start();
+		}
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setVisible(true);
+		c.process(frame::refresh);
+	}
+	
+	public void refresh(CircularOrbit<L, E> c){
 		Set<Double> tracks = c.getTracks();
+		Consumer<PhysicalObject> addCell = x -> cells.put(x, label(x));
 		
-		scale = (double) length / 2 / tracks.size();
+		scale = length / 2 / tracks.size();
+		Rs.clear();
 		tracks.forEach(f->{if(f > 0) Rs.put(f, (Rs.size() + 1) * scale); });
 		assert Rs.size() <= tracks.size();
 		
 		tracks.clear();
 		
 		setSize((int) (length * 1.1), (int) (length * 1.1));
-		Rs.values().forEach(this::circle);
 		
 		graph.getModel().beginUpdate();
-		Consumer<PhysicalObject> addCell = x -> cells.put(x, label(x));
+		
+		graph.removeCells(cells.values().toArray(), true);
+		graph.removeCells(circles.toArray());
+		cells.clear();
+		circles.clear();
+		
+		Rs.values().forEach(d->circles.add(circle(d)));
+		
 		try
 		{
 			addCell.accept(c.center());
@@ -61,38 +85,26 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		{
 			graph.getModel().endUpdate();
 		}
-		
 	}
 	
-	public static<L extends PhysicalObject, E extends PhysicalObject> void visualize(CircularOrbit<L, E> c){
-		CircularOrbitHelper<L, E> frame = new CircularOrbitHelper<>(c, 800);
-		if(c instanceof StellarSystem) {
-			Thread t = new Thread(frame::run);
-			t.start();
-		}
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setVisible(true);
-	}
-	
-	private void run() {
+	private void run(StellarSystem s) {
 		final int base = 2000;
 		class cnt{
 			private int i = base;
 		}
 		
-		final Map<PhysicalObject, PhysicalObject> current = new HashMap<>();
-		cells.forEach((k, v)->current.put(k, k));
+		Map <PhysicalObject, double[]>current = new HashMap<>();
+		cells.forEach((p, o)->current.put(p, xy(p)));
 		
 		for(final cnt t = new cnt();;t.i += base){
+			s.nextTime(t.i);
 			cells.forEach((p, c)->{
-				var newp = StellarSystem.nextTime(p, t.i);
-				var tmp = xy(newp);
-				double x = tmp[0], y = tmp[1];
-				tmp = xy(current.get(p));
-				current.put(p, newp);
+				var now = xy(p);
+				double x = now[0], y = now[1];
+				var tmp = current.get(p);
 				x -= tmp[0]; y -= tmp[1];
-				Object[] carr = {c};
-				graph.moveCells(carr, x, y);
+				tmp[0] = now[0]; tmp[1] = now[1];
+				graph.moveCells(new Object[]{c}, x, y);
 				//System.out.println(x + ", " + y);
 			});
 			//System.out.println("move " + t.i);
@@ -105,11 +117,11 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		}
 	}
 	
-	private void circle(double r){
-		if(r < 0) return;
+	private Object circle(double r){
+		if(r < 0) return null;
 		final var style = "shape=ellipse;fillColor=none;movable=0;resizable=0;editable=0;connectable=0;";
 		double base = length / 2 - r;
-		graph.insertVertex(parent, null, "", base, base, 2*r, 2*r, style);
+		return graph.insertVertex(parent, null, "", base, base, 2*r, 2*r, style);
 	}
 	
 	private double[] xy(PhysicalObject p){
@@ -144,12 +156,9 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		CircularOrbitFactory factory = new DefaultCircularOrbitFactory();
 		CircularOrbit s;
 		try {
-			System.out.println("load from:");
-			Scanner scanner = new Scanner(System.in);
-			s = factory.CreateAndLoad(scanner.next(".*\\.txt"));
-			scanner.close();
+			s = factory.CreateAndLoad(CircularOrbitAPIs.prompt(null, "Load From", "input the path of the config file. "));
 		} catch (IOException e) {
-			e.printStackTrace();
+			CircularOrbitAPIs.alert(null, "Error", e.getMessage());
 			return;
 		}
 		if(s == null) return;
