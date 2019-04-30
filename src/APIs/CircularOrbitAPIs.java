@@ -132,7 +132,7 @@ public class CircularOrbitAPIs {
 	}
 	
 	@NotNull
-	public static String prompt(@Nullable JFrame owner, String title, String msg){
+	public static String prompt(@Nullable JFrame owner, String title, String msg, @Nullable String def){
 		StringBuffer p = new StringBuffer();
 		class promptDialog extends JDialog{
 			private promptDialog(){
@@ -142,12 +142,14 @@ public class CircularOrbitAPIs {
 				panel.setLayout(null);
 				JLabel lbl; JTextField txt; JButton btn;
 				panel.add(lbl = new JLabel(msg));
-				panel.add(txt = new JTextField());
+				panel.add(txt = new JTextField(def));
 				panel.add(btn = new JButton("OK"));
 				
 				lbl.setBounds(8, 8, 256, 24);
 				txt.setBounds(8, 40, 256, 24);
 				btn.setBounds(288, 40, 56, 24);
+				
+				if(def != null) txt.setCaretPosition(def.length());
 				
 				btn.addActionListener(e -> {
 					p.append(txt.getText());

@@ -6,7 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import track.Track;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static APIs.CircularOrbitAPIs.*;
@@ -100,9 +102,16 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		throw new RuntimeException("only AtomStructure can transit. ");
 	}
 	
-	protected void test(JFrame frame, Consumer<CircularOrbit> end){
+	protected JPanel test(JFrame frame, Consumer<CircularOrbit> end){
+		JPanel common = new JPanel();
+		common.setBounds(8, 8, 336, 160);
+		common.setLayout(new FlowLayout(FlowLayout.CENTER, 336, 8));
+		common.setBorder(BorderFactory.createLineBorder(Color.decode("#673ab7"), 1, true));
+		frame.add(common);
+		
 		JPanel trackOP = new JPanel();
 		JPanel objOP = new JPanel();
+		JPanel entropy = new JPanel();
 		var ops = new String[]{"Add", "Remove"};
 		
 		JComboBox<String> trackops = new JComboBox<>(ops);
@@ -124,13 +133,19 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		});
 		
 		trackOP.add(trackops); trackOP.add(tracknum); trackOP.add(trackExec);
-		frame.add(trackOP);
-		trackOP.setBounds(8, 8, 336, 32);
+		common.add(trackOP);
 		
 		JComboBox<String> objops = new JComboBox<>(ops);
 		JComboBox<Double> objTidx = new JComboBox<>(getTracks().toArray(new Double[1]));
 		JButton objExec = new JButton("Execute");
-		
+		objops.addItemListener(e->{
+			String item = (String) e.getItem();
+			switch (item){
+				case "Add": objTidx.setVisible(false); break;
+				case "Remove": objTidx.setVisible(true); break;
+				default: break;
+			}
+		});
 		objExec.addActionListener(e -> {
 			switch(objops.getSelectedIndex()){
 				case 0:
@@ -147,8 +162,8 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 				case 1:
 					Double r = (Double) objTidx.getSelectedItem();
 					if(r != null) {
-						var elm = find_if(getTrack().get(Track.std(r)),
-								o->o.getName().equals(prompt(frame, "Remove object", "the name of the object: ")));
+						var elm = find_if(getTrack().get(Track.std(r)), o->o.getName().equals(
+							prompt(frame, "Remove object", "the name of the object: ", null)));
 						if(elm == null) alert(frame, "remove", "no such object...");
 						else removeObject(elm);
 					}
@@ -159,8 +174,16 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		});
 		
 		objOP.add(objops); objOP.add(objTidx); objOP.add(objExec);
-		frame.add(objOP);
-		objOP.setBounds(8, 64, 336, 32);
+		common.add(objOP);
+		objTidx.setVisible(false);
+		
+		JButton btnent = new JButton("Calculate Entropy");
+		JLabel lblrst = new JLabel("");
+		btnent.addActionListener(e-> lblrst.setText(String.valueOf(getObjectDistributionEntropy(this))));
+		entropy.add(btnent); entropy.add(lblrst);
+		common.add(entropy);
+		
+		return common;
 	}
 	
 	@Override

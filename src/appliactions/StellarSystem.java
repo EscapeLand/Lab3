@@ -1,8 +1,13 @@
 package appliactions;
 
+import APIs.CircularOrbitAPIs;
+import APIs.CircularOrbitHelper;
+import circularOrbit.CircularOrbit;
 import circularOrbit.PhysicalObject;
 import circularOrbit.SetCircularOrbit;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -16,6 +21,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
+	private Thread loop;
+	private double time = 0;
+	private double timeSpan = 2000;
+	private Runnable refresh;
+	
+	public void register(Runnable refresh) {
+		this.refresh = refresh;
+	}
+	
+	public void start(){
+		loop = new Thread(refresh);
+		loop.start();
+	}
+	
 	@Override
 	public boolean loadFromFile(String path) throws IOException {
 		File file = new File(path);
@@ -61,12 +80,96 @@ public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
 	}
 	
 	@Override
-	public void process(Consumer end) {
-	
+	public void process(Consumer<CircularOrbit> refresh) {
+		JFrame frame = new JFrame(getClass().getSimpleName());
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		frame.setLayout(null);
+		this.test(frame, refresh);
+		
+		frame.setVisible(true);
 	}
 	
-	public void nextTime(double time){
+	@Override
+	protected JPanel test(JFrame frame, Consumer<CircularOrbit> end) {
+		var par =  super.test(frame, end);
+		JPanel spec = new JPanel();
+		spec.setBounds(8, par.getY() + par.getHeight() + 8, 336, 136);
+		spec.setLayout(new FlowLayout(FlowLayout.CENTER, 336, 8));
+		spec.setBorder(BorderFactory.createLineBorder(Color.decode("#e91e63"), 1, true));
+		frame.add(spec);
+		
+		JPanel pnlTimeAt = new JPanel();
+		JLabel lblTimeAt = new JLabel("Time at: ");
+		JTextField txtTimeAt = new JTextField("18000");
+		JButton btnTimeApply = new JButton("Apply");
+		btnTimeApply.addActionListener(e-> {
+			setTime(Double.valueOf(txtTimeAt.getText()));
+			end.accept(this);
+		});
+		pnlTimeAt.add(lblTimeAt); pnlTimeAt.add(txtTimeAt); pnlTimeAt.add(btnTimeApply);
+		spec.add(pnlTimeAt);
+		
+		JPanel pnlCalc = new JPanel();
+		JLabel lblCalc = new JLabel("Distance between "), lblAnd = new JLabel(" and ")
+				, lblRes = new JLabel();
+		JTextField txtA = new JTextField("Neptune"), txtB = new JTextField("Mercury");
+		JButton btnCalc = new JButton("=");
+		btnCalc.addActionListener(e->{
+			lblCalc.setVisible(false);
+			PhysicalObject o1 = query(txtA.getText());
+			PhysicalObject o2 = query(txtB.getText());
+			if (o1 instanceof Planet && o2 instanceof Planet) {
+				lblRes.setText(String.valueOf(CircularOrbitAPIs.getPhysicalDistance(this, o1, o2)));
+			} else {
+				lblRes.setText("Didn't match. ");
+			}
+		});
+		pnlCalc.add(lblCalc); pnlCalc.add(txtA); pnlCalc.add(lblAnd); pnlCalc.add(txtB); pnlCalc.add(btnCalc);
+		pnlCalc.add(lblRes); spec.add(pnlCalc);
+		
+		JPanel pnlCtrl = new JPanel();
+		JButton btnReset = new JButton("Reset"),
+				btnPause = new JButton("Pause"),
+				btnTimeSpanApply = new JButton("Apply");
+		JTextField txtTimeSpan = new JTextField("1600000");
+		btnReset.addActionListener(e->{this.reset(); end.accept(this);});
+		btnPause.addActionListener(e->{
+			switch (btnPause.getText()) {
+				case "Resume":
+					start();
+					btnPause.setText("Pause");
+					break;
+				case "Pause":
+					loop.interrupt();
+					btnPause.setText("Resume");
+					break;
+			}
+		});
+		btnTimeSpanApply.addActionListener(e->this.setTimeSpan(Double.valueOf(txtTimeSpan.getText())));
+		pnlCtrl.add(btnReset); pnlCtrl.add(btnPause); pnlCtrl.add(txtTimeSpan); pnlCtrl.add(btnTimeSpanApply);
+		spec.add(pnlCtrl);
+		
+		frame.setBounds(1000,232,364,360);
+		
+		return spec;
+	}
+	
+	public void nextTime(){
+		this.time += timeSpan;
 		forEach(p->p.nextTime(time));
+	}
+	
+	private void setTime(double time){
+		if(loop != null) loop.interrupt();
+		this.time = time;
+		forEach(p->p.nextTime(time));
+	}
+	
+	private void reset(){ setTime(0); }
+	
+	private void setTimeSpan(double timeSpan) {
+		this.timeSpan = timeSpan;
 	}
 	
 	@Override
@@ -134,7 +237,7 @@ final class Planet extends PhysicalObject {
 	}
 	
 	void nextTime(double time) {
-		setPos(getPos() + v * time);
+		setPos(pos_init + v * time);
 	}
 	
 	private Form getForm() {

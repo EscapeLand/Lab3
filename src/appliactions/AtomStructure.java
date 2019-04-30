@@ -1,6 +1,5 @@
 package appliactions;
 
-import APIs.CircularOrbitHelper;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ListCircularOrbit;
 import circularOrbit.PhysicalObject;
@@ -10,14 +9,12 @@ import track.Track;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -106,6 +103,8 @@ public class AtomStructure extends ListCircularOrbit<Kernel, Electron> {
 	@Override
 	public void process(Consumer<CircularOrbit> refresh) {
 		JFrame frame = new JFrame(getClass().getSimpleName());
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
 		frame.setLayout(null);
 		this.test(frame, refresh);
 		
@@ -113,11 +112,17 @@ public class AtomStructure extends ListCircularOrbit<Kernel, Electron> {
 	}
 	
 	@Override
-	protected void test(JFrame frame, Consumer<CircularOrbit> refresh) {
-		super.test(frame, refresh);
+	protected JPanel test(JFrame frame, Consumer<CircularOrbit> refresh) {
+		var par = super.test(frame, refresh);
+		JPanel spec = new JPanel();
+		spec.setBounds(8, par.getY() + par.getHeight() + 8, 336, 48);
+		spec.setLayout(new FlowLayout(FlowLayout.CENTER, 336, 8));
+		spec.setBorder(BorderFactory.createLineBorder(Color.decode("#e91e63"), 1, true));
+		frame.add(spec);
+		
 		JPanel panel = new JPanel();
-		frame.add(panel);
-		panel.setBounds(8, 120, 336, 32);
+		spec.add(panel);
+		panel.setBounds(8, 176, 336, 32);
 		
 		JComboBox<Double> cmbS1 = new JComboBox<>(getTracks().toArray(new Double[0]));
 		JComboBox<Double> cmbS2 = new JComboBox<>(getTracks().toArray(new Double[0]));
@@ -125,7 +130,7 @@ public class AtomStructure extends ListCircularOrbit<Kernel, Electron> {
 		JTextField txtNum = new JTextField("10");
 		
 		panel.add(cmbS1); panel.add(btnTrsit); panel.add(cmbS2); panel.add(txtNum);
-		frame.setBounds(1000,150,360,280);
+		frame.setBounds(1000,232,364,280);
 		
 		btnTrsit.addActionListener(e -> {
 			Double from = (Double) cmbS1.getSelectedItem();
@@ -134,6 +139,8 @@ public class AtomStructure extends ListCircularOrbit<Kernel, Electron> {
 			transit(from, to, Integer.valueOf(txtNum.getText()));
 			refresh.accept(this);
 		});
+		
+		return spec;
 	}
 	
 	private void recover(double from, double to, boolean state){

@@ -1,13 +1,17 @@
 package appliactions;
 
+import circularOrbit.CircularOrbit;
 import circularOrbit.PhysicalObject;
 import circularOrbit.SetCircularOrbit;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -91,8 +95,26 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 	}
 	
 	@Override
-	public void process(Consumer end) {
+	public void process(Consumer refresh) {
+		JFrame frame = new JFrame(getClass().getSimpleName());
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		frame.setLayout(null);
+		this.test(frame, refresh);
+		
+		frame.setVisible(true);
+	}
 	
+	@Override
+	protected JPanel test(JFrame frame, Consumer<CircularOrbit> end) {
+		JPanel par = super.test(frame, end);
+		JPanel spec = new JPanel();
+		spec.setBounds(8, par.getY() + par.getHeight() + 8, 336, 48);
+		spec.setLayout(new FlowLayout(FlowLayout.CENTER, 336, 8));
+		spec.setBorder(BorderFactory.createLineBorder(Color.decode("#e91e63"), 1, true));
+		frame.add(spec);
+		
+		return spec;
 	}
 	
 	@Override
@@ -116,8 +138,7 @@ final class User extends PhysicalObject {
 	}
 	
 	User(String name, int age, Gender gender) {
-		super(name);
-		setPos(360 * Math.random());
+		super(name, -1);
 		this.gender = gender;
 		this.age = age;
 	}

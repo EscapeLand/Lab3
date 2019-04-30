@@ -1,10 +1,7 @@
 package APIs;
 
 import appliactions.StellarSystem;
-import circularOrbit.CircularOrbit;
-import circularOrbit.CircularOrbitFactory;
-import circularOrbit.DefaultCircularOrbitFactory;
-import circularOrbit.PhysicalObject;
+import circularOrbit.*;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.view.mxGraph;
 import graph.Graph;
@@ -15,6 +12,9 @@ import java.awt.*;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
+
+import static APIs.CircularOrbitAPIs.alert;
+import static java.lang.Thread.interrupted;
 
 
 public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObject> extends JFrame {
@@ -35,21 +35,21 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		mxGraphComponent graphComponent = new mxGraphComponent(graph);
 		getContentPane().add(graphComponent);
 		
-		refresh(c);
+		refresh(c, false);
 	}
 	
 	public static<L extends PhysicalObject, E extends PhysicalObject> void visualize(CircularOrbit<L, E> c){
 		CircularOrbitHelper<L, E> frame = new CircularOrbitHelper<>(c, 800);
 		if(c instanceof StellarSystem) {
-			Thread t = new Thread(() -> frame.run((StellarSystem) c));
-			t.start();
+			((StellarSystem) c).register(() -> frame.run((StellarSystem) c));
+			((StellarSystem) c).start();
 		}
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setVisible(true);
-		c.process(frame::refresh);
+		c.process(c1 -> frame.refresh(c1, true));
 	}
 	
-	public void refresh(CircularOrbit<L, E> c){
+	public void refresh(CircularOrbit<L, E> c, boolean refreshCircle){
 		Set<Double> tracks = c.getTracks();
 		Consumer<PhysicalObject> addCell = x -> cells.put(x, label(x));
 		
@@ -65,9 +65,12 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		graph.getModel().beginUpdate();
 		
 		graph.removeCells(cells.values().toArray(), true);
-		graph.removeCells(circles.toArray());
 		cells.clear();
-		circles.clear();
+		
+		if(refreshCircle){
+			graph.removeCells(circles.toArray());
+			circles.clear();
+		}
 		
 		Rs.values().forEach(d->circles.add(circle(d)));
 		
@@ -87,17 +90,12 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		}
 	}
 	
-	private void run(StellarSystem s) {
-		final int base = 2000;
-		class cnt{
-			private int i = base;
-		}
-		
+	private void run(@NotNull StellarSystem s) {
 		Map <PhysicalObject, double[]>current = new HashMap<>();
 		cells.forEach((p, o)->current.put(p, xy(p)));
 		
-		for(final cnt t = new cnt();;t.i += base){
-			s.nextTime(t.i);
+		while(!interrupted()){
+			s.nextTime();
 			cells.forEach((p, c)->{
 				var now = xy(p);
 				double x = now[0], y = now[1];
@@ -105,13 +103,10 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 				x -= tmp[0]; y -= tmp[1];
 				tmp[0] = now[0]; tmp[1] = now[1];
 				graph.moveCells(new Object[]{c}, x, y);
-				//System.out.println(x + ", " + y);
 			});
-			//System.out.println("move " + t.i);
 			try {
 				Thread.sleep(60);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
 				return;
 			}
 		}
@@ -156,9 +151,10 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		CircularOrbitFactory factory = new DefaultCircularOrbitFactory();
 		CircularOrbit s;
 		try {
-			s = factory.CreateAndLoad(CircularOrbitAPIs.prompt(null, "Load From", "input the path of the config file. "));
+			s = factory.CreateAndLoad(CircularOrbitAPIs.prompt(null, "Load From",
+					"input the path of the config file. ", "input/"));
 		} catch (IOException e) {
-			CircularOrbitAPIs.alert(null, "Error", e.getMessage());
+			alert(null, "Error", e.getMessage());
 			return;
 		}
 		if(s == null) return;
