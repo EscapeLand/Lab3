@@ -1,15 +1,17 @@
 package APIs;
 
 import appliactions.StellarSystem;
-import circularOrbit.*;
+import circularOrbit.CircularOrbit;
+import circularOrbit.CircularOrbitFactory;
+import circularOrbit.DefaultCircularOrbitFactory;
+import circularOrbit.PhysicalObject;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.view.mxGraph;
-import graph.Graph;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -78,10 +80,11 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		{
 			addCell.accept(c.center());
 			c.forEach(addCell);
-			final Graph<PhysicalObject> pg = c.getGraph();
-			pg.vertices().forEach(v->{
-				var tmpo = cells.get(v);
-				pg.sources(v).forEach((key, value) -> line(tmpo, cells.get(key), value.toString()));
+			final var pg = c.getGraph().edges();
+			pg.forEach((e, f)->{
+				PhysicalObject a = (PhysicalObject) e[0];
+				PhysicalObject b = (PhysicalObject) e[1];
+				if(a.getR() < b.getR()) line(cells.get(a), cells.get(b), f.toString());
 			});
 		}
 		finally
@@ -125,8 +128,8 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		if(p.getR() == -1) r = scale * (Rs.size() + 1);
 		else r = Rs.get(p.getR());
 		if(r == null) r = 0.0;
-		ret[0] = length / 2.0 + r * Math.cos(p.getPos());
-		ret[1] = length / 2.0 + r * Math.sin(p.getPos());
+		ret[0] = length / 2.0 + r * Math.cos(Math.toRadians(p.getPos()));
+		ret[1] = length / 2.0 + r * Math.sin(Math.toRadians(p.getPos()));
 		return ret;
 	}
 	
@@ -150,14 +153,46 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 	public static void main(String[] args){
 		CircularOrbitFactory factory = new DefaultCircularOrbitFactory();
 		CircularOrbit s;
+		Properties prop = new Properties();
+		String last = null;
+		
+		try{
+			InputStream in = new BufferedInputStream(new FileInputStream("history.properties"));
+			prop.load(in);
+			last = prop.getProperty("lastLoad");
+			in.close();
+		} catch (IOException e) {
+			System.out.println("INFO: property not load. continued. ");
+		}
+		finally {
+			if(last == null) last = "input/";
+			last = CircularOrbitAPIs.prompt(null,
+					"Load From", "input the path of the config file. ", last);
+		}
+		
 		try {
-			s = factory.CreateAndLoad(CircularOrbitAPIs.prompt(null, "Load From",
-					"input the path of the config file. ", "input/"));
+			s = factory.CreateAndLoad(last);
 		} catch (IOException e) {
 			alert(null, "Error", e.getMessage());
 			return;
 		}
-		if(s == null) return;
+		
+		if(s == null) {
+			if(!last.equals(""))
+				alert(null, "Error", "failed to create circular orbit. ");
+			return;
+		}
+		
+		try {
+			FileOutputStream oFile = new FileOutputStream("history.properties");
+			prop.setProperty("lastLoad", last);
+			prop.store(oFile, "History");
+			oFile.close();
+		} catch (IOException e) {
+			alert(null, "Error", e.getMessage());
+			return;
+		}
+		
 		visualize(s);
 	}
 }

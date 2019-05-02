@@ -86,7 +86,7 @@ public class AtomStructure extends ListCircularOrbit<Kernel, Electron> {
 		
 		for (int i = 0; i < lfrom.size(); i++) {
 			Electron e = lfrom.get(i);
-			if (e.isGround() == up && moveObject(e, from, to)) {
+			if (e.isGround() == up && moveObject(e, to)) {
 				i--;
 				e.switchState(!up);
 				if (--n == 0) break;

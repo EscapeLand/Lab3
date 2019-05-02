@@ -38,4 +38,9 @@ public class Track<E extends PhysicalObject> {
 	public static<E extends PhysicalObject> Track<E> std(double R){
 		return new Track<>(R);
 	}
+	
+	@Override
+	public String toString() {
+		return R.toString();
+	}
 }

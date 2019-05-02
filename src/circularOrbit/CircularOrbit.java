@@ -43,11 +43,10 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	
 	/**
 	 * @param obj which to move.
-	 * @param from move from. -1, or other positive double.
 	 * @param to move to. -1, or other positive double.
 	 * @return true if success, false if no track has radius equals to from or to.
 	 */
-	public boolean moveObject(E obj, double from, double to);
+	public boolean moveObject(E obj, double to);
 	
 	/**
 	 * @param obj remove a object from circular orbit.
@@ -58,10 +57,10 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	/**
 	 * @param a begin of relation.
 	 * @param b end of relation
-	 * @param val weight of the relation.
+	 * @param val weight of the relation. if val == 0, it means remove the relation.
 	 * @return if the relation is already exist, return false; else return true.
 	 */
-	public boolean addRelation(PhysicalObject a, PhysicalObject b, float val);
+	public boolean setRelation(PhysicalObject a, PhysicalObject b, float val);
 	
 	/**
 	 * @return return the relation graph of the circular orbit.
@@ -80,6 +79,7 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	 * @param name name of the object, either L or E.
 	 * @return the object.
 	 */
+	@Nullable
 	public PhysicalObject query(String name);
 	
 	/**

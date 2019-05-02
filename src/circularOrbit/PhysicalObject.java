@@ -7,8 +7,9 @@ public abstract class PhysicalObject {
 	private final String name;
 	protected final double R_init;
 	protected final double pos_init;
-	private double R = -1;
-	private double pos = 0;
+	private double R;
+	private double pos;
+	private static int num = 0;
 	
 	public PhysicalObject(String name, double r, double pos) {
 		this.name = name;
@@ -19,7 +20,9 @@ public abstract class PhysicalObject {
 	public PhysicalObject(String name, double r) {
 		this.name = name;
 		this.R_init = this.R = r;
-		this.pos_init = this.pos = 360 * Math.random();
+		this.pos_init = this.pos = num < 12 ? 30 * num + 30 * Math.random()
+						: 360 * Math.random();
+		num++;
 	}
 	
 	public final double getR() {

@@ -10,8 +10,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class CircularOrbitAPIs {
@@ -120,15 +122,21 @@ public class CircularOrbitAPIs {
 	}
 	
 	private static double oppositeSide(double includeAngle, double l1, double l2){
-		return Math.sqrt(l1 * l1 + l2 * l2 - 2 * l1 * l2 * Math.cos(includeAngle));
+		return Math.sqrt(l1 * l1 + l2 * l2 - 2 * l1 * l2 * Math.cos(Math.toRadians(includeAngle)));
 	}
 	
 	@Nullable
-	public static <E> E find_if(Iterable<E> col, Predicate<E> pred){
+	public static <E> E find_if(@NotNull Iterable<E> col, Predicate<E> pred){
 		for (E e : col) {
 			if(pred.test(e)) return e;
 		}
 		return null;
+	}
+	
+	@NotNull
+	public static <O, R> void transform(@NotNull Collection<O> src, @NotNull Collection<R> des, Function<O, R> func){
+		des.clear();
+		src.forEach(s->des.add(func.apply(s)));
 	}
 	
 	@NotNull
@@ -137,6 +145,7 @@ public class CircularOrbitAPIs {
 		class promptDialog extends JDialog{
 			private promptDialog(){
 				super(owner, title);
+				setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 				setBounds(400,200,368,128);
 				Container panel = getContentPane();
 				panel.setLayout(null);
@@ -151,10 +160,16 @@ public class CircularOrbitAPIs {
 				
 				if(def != null) txt.setCaretPosition(def.length());
 				
-				btn.addActionListener(e -> {
+				ActionListener act = e -> {
 					p.append(txt.getText());
 					this.dispose();
-				});
+				};
+				btn.addActionListener(act);
+				
+				txt.registerKeyboardAction(act,
+				KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false),
+				JComponent.WHEN_FOCUSED);
+				
 				setModal(true);
 			}
 		}

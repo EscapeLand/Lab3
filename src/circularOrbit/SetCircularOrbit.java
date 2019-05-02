@@ -26,7 +26,7 @@ public abstract class SetCircularOrbit<L extends PhysicalObject, E extends Physi
 		return re.add(newObject);
 	}
 	
-	@Override
+	@Override @Nullable
 	public Set<E> getObjectsOnTrack(double r) {
 		return new TreeSet<>(tracks.get(Track.std(r)));
 	}

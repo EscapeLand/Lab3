@@ -1,8 +1,8 @@
 package circularOrbit;
 
-import appliactions.PhysicalObjectFactory;
 import graph.Graph;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import track.Track;
 
 import javax.swing.*;
@@ -39,7 +39,9 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	}
 	
 	@Override
-	public boolean moveObject(E obj, double from, double to) {
+	public boolean moveObject(E obj, double to) {
+		double from = obj.getR();
+		if(from == to) return true;
 		var cfrom = getTrack().get(Track.std(from));
 		var cto = getTrack().get(Track.std(to));
 		if(cfrom == null || cto == null) return false;
@@ -62,7 +64,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	}
 	
 	@Override
-	public boolean addRelation(@NotNull PhysicalObject a, @NotNull PhysicalObject b, float val){
+	public boolean setRelation(@NotNull PhysicalObject a, @NotNull PhysicalObject b, float val){
 		relationship.add(a);
 		relationship.add(b);
 		return 0 == relationship.set(a, b, val) && 0 ==relationship.set(b, a, val);
@@ -73,8 +75,9 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		return relationship;
 	}
 	
-	@Override
-	public PhysicalObject query(String name){
+	@Override @Nullable
+	public PhysicalObject query(String objName){
+		final String name = objName.trim();
 		if(centre.getName().equals(name)) return centre;
 		for(var i: getTrack().values()){
 			assert i instanceof List || i instanceof Set;

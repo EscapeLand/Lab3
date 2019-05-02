@@ -3,6 +3,7 @@ package appliactions;
 import circularOrbit.CircularOrbit;
 import circularOrbit.PhysicalObject;
 import circularOrbit.SetCircularOrbit;
+import track.Track;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,13 +11,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static APIs.CircularOrbitAPIs.find_if;
+import static APIs.CircularOrbitAPIs.getLogicalDistance;
+import static APIs.CircularOrbitAPIs.transform;
 
 public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, User> {
 	@Override
@@ -58,44 +60,22 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 		reader.close();
 		assert center != null;
 		
-		boolean flag = false;
-		do{
-			flag = false;
-			for(String[] list: record){
-				User anIf = list[0].equals(center) ? new User(0.0, "", 0, null) :
-						find_if(params, q -> q.getName().equals(list[0]));
-				if(anIf == null){
-					System.out.println("vertex not include: " + list[0]);
-					continue;
-				}
-				if(anIf.getR() == -1) continue;
-				User anIf2 = find_if(params, q -> q.getName().equals(list[1]));
-				if(anIf2 == null){
-					System.out.println("vertex not include: " + list[0]);
-					continue;
-				}
-				if(anIf2.getR() == -1 || anIf2.getR() > anIf.getR() + 1){
-					flag = true;
-					anIf2.setR(anIf.getR() + 1);
-				}
-			}
-			if(!flag) break;
-		} while(null != find_if(params, q->q.getR() == -1));
-		
 		params.forEach(this::addObject);
 		
 		for (String[] list : record) {
 			PhysicalObject q1 = query(list[0]);
 			PhysicalObject q2 = query(list[1]);
 			assert q1 != null && q2 != null;
-			addRelation(q1, q2, Float.valueOf(list[2]));
+			setRelation(q1, q2, Float.valueOf(list[2]));
 		}
+		
+		updateR();
 		
 		return true;
 	}
 	
 	@Override
-	public void process(Consumer refresh) {
+	public void process(Consumer<CircularOrbit> refresh) {
 		JFrame frame = new JFrame(getClass().getSimpleName());
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
@@ -109,12 +89,133 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 	protected JPanel test(JFrame frame, Consumer<CircularOrbit> end) {
 		JPanel par = super.test(frame, end);
 		JPanel spec = new JPanel();
-		spec.setBounds(8, par.getY() + par.getHeight() + 8, 336, 48);
+		spec.setBounds(8, par.getY() + par.getHeight() + 8, 336, 136);
 		spec.setLayout(new FlowLayout(FlowLayout.CENTER, 336, 8));
 		spec.setBorder(BorderFactory.createLineBorder(Color.decode("#e91e63"), 1, true));
 		frame.add(spec);
 		
+		final String[] operation = new String[]{"Add", "Remove"};
+		
+		//============================================================
+		//============================================================
+		//============================================================
+		
+		JPanel pnlRlt = new JPanel();
+		JComboBox<String> cmbRltOP = new JComboBox<>(operation);
+		JTextField txtA = new JTextField("TommyWong"), txtB = new JTextField("TomWong"),
+				txtFrV = new JTextField("0.99");
+		JButton btnRltApply = new JButton("Apply");
+		btnRltApply.addActionListener(e->{
+			var a = query(txtA.getText());
+			var b = query(txtB.getText());
+			if(a == null || b == null) return;
+			
+			switch (cmbRltOP.getSelectedIndex()){
+				case 0: setRelation(a, b, Float.valueOf(txtFrV.getText())); break;
+				case 1: setRelation(a, b, 0); break;
+			}
+			updateR();
+			end.accept(this);
+		});
+		pnlRlt.add(cmbRltOP); pnlRlt.add(txtA); pnlRlt.add(txtB); pnlRlt.add(txtFrV);
+		pnlRlt.add(btnRltApply);
+		spec.add(pnlRlt);
+		
+		//============================================================
+		//============================================================
+		//============================================================
+		
+		JPanel pnlExt = new JPanel();
+		var tmpuser = tracks.get(Track.std(1));
+		Set<String> tmpstring;
+		if(tmpuser == null) tmpstring = null;
+		else tmpstring = new HashSet<>(tmpuser.size());
+		if(tmpstring != null) transform(tmpuser, tmpstring, PhysicalObject::getName);
+		JComboBox<String> cmbElm = new JComboBox<>(tmpstring == null ? new String[]{} : tmpstring.toArray(new String[0]));
+		if(tmpstring != null) tmpstring.clear();
+		JButton btnExt = new JButton("Calculate");
+		JLabel lblExtRst = new JLabel();
+		btnExt.addActionListener(e->{
+			String item = (String) cmbElm.getSelectedItem();
+			if(item == null) return;
+			var a = query(item);
+			if(a instanceof User) lblExtRst.setText(String.valueOf(extendVal((User) a)));
+		});
+		pnlExt.add(cmbElm); pnlExt.add(btnExt); pnlExt.add(lblExtRst);
+		spec.add(pnlExt);
+		
+		//============================================================
+		//============================================================
+		//============================================================
+		
+		JPanel pnlLgc = new JPanel();
+		JLabel lblLgc = new JLabel("LGC DIST between: "), lblrst = new JLabel();
+		JButton btnLgc = new JButton("=");
+		JTextField txtC = new JTextField("DavidChen"), txtD = new JTextField("TomWong");
+		
+		btnLgc.addActionListener(e->{
+			var a = query(txtC.getText());
+			var b = query(txtD.getText());
+			if(a instanceof User && b instanceof User){
+				lblrst.setText(String.valueOf(getLogicalDistance(this, (User)a, (User)b)));
+				lblLgc.setVisible(false);
+			}
+			else {
+				lblrst.setText("");
+				lblLgc.setVisible(true);
+			}
+		});
+		
+		pnlLgc.add(lblLgc); pnlLgc.add(txtC); pnlLgc.add(txtD); pnlLgc.add(btnLgc); pnlLgc.add(lblrst);
+		spec.add(pnlLgc);
+		
+		frame.setBounds(1000,232,364,360);
 		return spec;
+	}
+	
+	private void updateR(){
+		var graph = getGraph();
+		Set<PhysicalObject> cur = new HashSet<>(1);
+		cur.add(center());
+		var vertex = graph.vertices(); vertex.remove(center());
+		int n = vertex.size() + 1;
+		
+		for(int k = 0; !vertex.isEmpty() && vertex.size() < n; k++) {
+			Set<PhysicalObject> rSet = new HashSet<>();
+			cur.forEach(p->rSet.addAll(graph.targets(p).keySet()));
+			final int tmp = k;
+			n = vertex.size();
+			rSet.forEach(p->{
+				if(vertex.remove(p)){
+					if(tracks.get(Track.std(tmp + 1)) == null) addTrack(tmp + 1);
+					moveObject((User) p, tmp + 1);
+				}
+			});
+			cur = rSet;
+		}
+		
+		tracks.entrySet().removeIf(trackSetEntry -> trackSetEntry.getValue().isEmpty());
+	}
+	
+	private int extendVal(User first){
+		Map<PhysicalObject, Float> cur = new HashMap<>(1);
+		Set<PhysicalObject> rSet = new HashSet<>();
+		cur.put(first, 1.0f);
+		var graph = getGraph();
+		
+		while (!cur.isEmpty()){
+			Map<PhysicalObject, Float> rMap = new HashMap<>();
+			cur.forEach((u, f)->{
+				rMap.putAll(graph.targets(u));
+				rMap.entrySet().removeIf(t->t.getKey().getR() < u.getR());
+				rMap.values().forEach(i->i *= f);
+				rMap.entrySet().removeIf(t->t.getValue() < 0.02);
+			});
+			rSet.addAll(cur.keySet());
+			cur = rMap;
+		}
+		
+		return rSet.size() - 1;
 	}
 	
 	@Override
