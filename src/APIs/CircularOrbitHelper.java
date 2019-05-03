@@ -8,6 +8,7 @@ import circularOrbit.PhysicalObject;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.view.mxGraph;
 import org.jetbrains.annotations.NotNull;
+import track.Track;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +25,8 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 	private Object parent;
 	private double scale;
 	private double length;
-	private Map<Double, Double> Rs = new TreeMap<>(Double::compare);
+	private Map<Double[], Double[]> Rs = new TreeMap<>(
+			Comparator.comparingDouble((Double[] a) -> a[0]).thenComparingDouble(a -> a[1]));
 	private Map<PhysicalObject, Object> cells = new TreeMap<>(PhysicalObject.getDefaultComparator());
 	private Set<Object> circles = new HashSet<>();
 	
@@ -40,7 +42,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		refresh(c, false);
 	}
 	
-	public static<L extends PhysicalObject, E extends PhysicalObject> void visualize(CircularOrbit<L, E> c){
+	static<L extends PhysicalObject, E extends PhysicalObject> void visualize(CircularOrbit<L, E> c){
 		CircularOrbitHelper<L, E> frame = new CircularOrbitHelper<>(c, 800);
 		if(c instanceof StellarSystem) {
 			((StellarSystem) c).register(() -> frame.run((StellarSystem) c));
@@ -51,13 +53,19 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		c.process(c1 -> frame.refresh(c1, true));
 	}
 	
-	public void refresh(CircularOrbit<L, E> c, boolean refreshCircle){
-		Set<Double> tracks = c.getTracks();
-		Consumer<PhysicalObject> addCell = x -> cells.put(x, label(x));
+	void refresh(CircularOrbit<L, E> c, boolean refreshCircle){
+		Set<Double[]> tracks = c.getTracks();
+		Consumer<PhysicalObject> addCell = x -> {if(x != null) cells.put(x, label(x));};
 		
 		scale = length / 2 / tracks.size();
 		Rs.clear();
-		tracks.forEach(f->{if(f > 0) Rs.put(f, (Rs.size() + 1) * scale); });
+		tracks.forEach(f->{
+			if(f[0] > 0) {
+				var tmp = (Rs.size() + 1) * scale;
+				Rs.put(f, new Double[]{tmp, tmp * f[1] / f[0]});
+			}
+			
+		});
 		assert Rs.size() <= tracks.size();
 		
 		tracks.clear();
@@ -84,7 +92,8 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 			pg.forEach((e, f)->{
 				PhysicalObject a = (PhysicalObject) e[0];
 				PhysicalObject b = (PhysicalObject) e[1];
-				if(a.getR() < b.getR()) line(cells.get(a), cells.get(b), f.toString());
+				if(Track.compare(a.getR(), b.getR()) > 0)
+					line(cells.get(a), cells.get(b), f.toString());
 			});
 		}
 		finally
@@ -115,21 +124,23 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 		}
 	}
 	
-	private Object circle(double r){
-		if(r < 0) return null;
+	private Object circle(Double[] r){
+		if(r[0] < 0) return null;
 		final var style = "shape=ellipse;fillColor=none;movable=0;resizable=0;editable=0;connectable=0;";
-		double base = length / 2 - r;
-		return graph.insertVertex(parent, null, "", base, base, 2*r, 2*r, style);
+		double basex = length / 2 - r[0];
+		double basey = length / 2 - r[1];
+		return graph.insertVertex(parent, null, "", basex, basey, 2*r[0], 2*r[1], style);
 	}
 	
 	private double[] xy(PhysicalObject p){
 		final double[] ret = new double[2];
-		Double r;
-		if(p.getR() == -1) r = scale * (Rs.size() + 1);
-		else r = Rs.get(p.getR());
-		if(r == null) r = 0.0;
-		ret[0] = length / 2.0 + r * Math.cos(Math.toRadians(p.getPos()));
-		ret[1] = length / 2.0 + r * Math.sin(Math.toRadians(p.getPos()));
+		Double[] r;
+		if(p.getR().getRect()[0] == -1)
+			r = new Double[]{scale * (Rs.size() + 1), scale * (Rs.size() + 1)};
+		else r = Rs.get(p.getR().getRect_alt());
+		if(r == null) r = new Double[]{0.0, 0.0};
+		ret[0] = length / 2.0 + r[0] * Math.cos(Math.toRadians(p.getPos()));
+		ret[1] = length / 2.0 + r[1] * Math.sin(Math.toRadians(p.getPos()));
 		return ret;
 	}
 	

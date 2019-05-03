@@ -8,11 +8,11 @@ import track.Track;
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static APIs.CircularOrbitAPIs.*;
 import static appliactions.PhysicalObjectFactory.*;
+import static circularOrbit.PhysicalObject.getDefaultComparator;
 
 public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends PhysicalObject>
 		implements CircularOrbit<L, E>
@@ -20,11 +20,21 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	private Graph<PhysicalObject> relationship = Graph.empty();
 	private L centre = null;
 	
-	protected abstract <C extends Collection<E>> Map<Track<E>, C> getTrack();
+	protected Set<E> objects = new TreeSet<>(getDefaultComparator());
+	private Set<Track> tracks = new HashSet<>();
+	
 	protected abstract String[] hintForUser();
+	public abstract void checkRep();
+	
 	@Override
-	public boolean removeTrack(Double r){
-		return null != getTrack().remove(Track.std(r));
+	public boolean addTrack(double[] r) {
+		return tracks.add(new Track<>(r));
+	}
+	
+	@Override
+	public boolean removeTrack(double[] r){
+		Track<E> tmp = new Track<>(r);
+		return tracks.remove(tmp) && objects.removeIf(e->e.getR().equals(tmp));
 	}
 	
 	@Override
@@ -34,33 +44,22 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		return prev;
 	}
 	
-	boolean findTrack(double r){
-		return getTrack().containsKey(Track.std(r));
+	protected boolean findTrack(double[] r){
+		var tmp = new Track(r);
+		return tracks.contains(tmp);
 	}
 	
 	@Override
-	public boolean moveObject(E obj, double to) {
-		double from = obj.getR();
-		if(from == to) return true;
-		var cfrom = getTrack().get(Track.std(from));
-		var cto = getTrack().get(Track.std(to));
-		if(cfrom == null || cto == null) return false;
-		
-		var tomove = find_if(cfrom, e->e.equals(obj));
-		if (tomove == null || !cfrom.remove(obj)) {
-			return false;
-		}
-		tomove.setR(to);
-		return cto.add(tomove);
+	public boolean moveObject(E obj, double[] to) {
+		if(!objects.contains(obj)) return false;
+		var tmp = new Track<>(to);
+		obj.setR(tmp);
+		return true;
 	}
 	
 	@Override
 	public boolean removeObject(@NotNull E obj){
-		Collection<E> re = getTrack().get(Track.std(obj.getR()));
-		if(re instanceof List || re instanceof Set){
-			return Track.removeObject(re, obj);
-		}
-		return false;
+		return objects.remove(obj);
 	}
 	
 	@Override
@@ -79,12 +78,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	public PhysicalObject query(String objName){
 		final String name = objName.trim();
 		if(centre.getName().equals(name)) return centre;
-		for(var i: getTrack().values()){
-			assert i instanceof List || i instanceof Set;
-			E anIf = find_if(i, (p)-> Objects.equals(p.getName(), name));
-			if(anIf != null) return anIf;
-		}
-		return null;
+		return find_if(objects, e->e.getName().equals(objName));
 	}
 	
 	@Override
@@ -93,15 +87,14 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	}
 	
 	@Override
-	public Set<Double> getTracks() {
-		Set<Double> r = new TreeSet<>();
-		getTrack().keySet().forEach(t->r.add(t.R));
-		
-		return r;
+	public Set<Double[]> getTracks() {
+		Set<Double[]> ret = new TreeSet<>(Comparator.comparingDouble((Double[] a) -> a[0]).thenComparingDouble(a -> a[1]));
+		transform(tracks, ret, Track::getRect_alt);
+		return ret;
 	}
 	
 	@Override
-	public boolean transit(double from, double to, int number) {
+	public boolean transit(double[] from, double[] to, int number) {
 		throw new RuntimeException("only AtomStructure can transit. ");
 	}
 	
@@ -117,29 +110,24 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		JPanel entropy = new JPanel();
 		var ops = new String[]{"Add", "Remove"};
 		
-		JComboBox<String> trackops = new JComboBox<>(ops);
+		JLabel lblrmv = new JLabel("remove track");
 		JTextField tracknum = new JTextField("-1");
 		JButton trackExec = new JButton("Execute");
 		
 		trackExec.addActionListener(e -> {
 			Double d = Double.valueOf(tracknum.getText());
-			switch (trackops.getSelectedIndex()){
-				case 0:
-					addTrack(d);
-					break;
-				case 1:
-					removeTrack(d);
-					break;
-				default: return;
-			}
+			removeTrack(new double[]{d});
+			
 			end.accept(this);
 		});
 		
-		trackOP.add(trackops); trackOP.add(tracknum); trackOP.add(trackExec);
+		trackOP.add(lblrmv); trackOP.add(tracknum); trackOP.add(trackExec);
 		common.add(trackOP);
 		
 		JComboBox<String> objops = new JComboBox<>(ops);
-		JComboBox<Double> objTidx = new JComboBox<>(getTracks().toArray(new Double[1]));
+		Set<Track> tmp = new TreeSet<>(Track.defaultComparator);
+		transform(getTracks(), tmp, Track::new);
+		JComboBox<Track> objTidx = new JComboBox<>(tmp.toArray(new Track[0]));
 		JButton objExec = new JButton("Execute");
 		objops.addItemListener(e->{
 			String item = (String) e.getItem();
@@ -163,12 +151,9 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 					if(p != null) addObject((E) p);
 					break;
 				case 1:
-					Double r = (Double) objTidx.getSelectedItem();
+					Track r = (Track) objTidx.getSelectedItem();
 					if(r != null) {
-						var elm = find_if(getTrack().get(Track.std(r)), o->o.getName().equals(
-							prompt(frame, "Remove object", "the name of the object: ", null)));
-						if(elm == null) alert(frame, "remove", "no such object...");
-						else removeObject(elm);
+						removeTrack(r.getRect());
 					}
 					break;
 				default: return;
@@ -192,5 +177,36 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	@Override
 	public String toString() {
 		return getClass().getSimpleName();
+	}
+	
+	@Override @NotNull
+	public Iterator<E> iterator() {
+		return objects.iterator();
+	}
+	
+	@Override
+	public boolean addObject(@NotNull E newObject){
+		tracks.add(newObject.getR());
+		return objects.add(newObject);
+	}
+	
+	@Override @NotNull
+	public Set<E> getObjectsOnTrack(double[] r) {
+		final Set<E> ret = new TreeSet<>(E.getDefaultComparator());
+		final var tmp = new Track(r);
+		forEach(e->{
+			if(e.getR().equals(tmp)) ret.add((E) e.clone());
+		});
+		return ret;
+	}
+	
+	@Override @NotNull
+	public Set<E> getObjectsOnTrack(Double[] r) {
+		final Set<E> ret = new TreeSet<>(E.getDefaultComparator());
+		final var tmp = new Track(r);
+		forEach(e->{
+			if(e.getR().equals(tmp)) ret.add((E) e.clone());
+		});
+		return ret;
 	}
 }

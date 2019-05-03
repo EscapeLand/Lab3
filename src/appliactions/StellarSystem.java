@@ -1,10 +1,12 @@
 package appliactions;
 
 import APIs.CircularOrbitAPIs;
-import APIs.CircularOrbitHelper;
 import circularOrbit.CircularOrbit;
+import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
-import circularOrbit.SetCircularOrbit;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import track.Track;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,15 +14,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
+public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet> {
 	private Thread loop;
 	private double time = 0;
 	private double timeSpan = 2000;
@@ -176,10 +176,22 @@ public class StellarSystem extends SetCircularOrbit<FixedStar, Planet> {
 	protected String[] hintForUser() {
 		return PhysicalObjectFactory.hint_Planet;
 	}
+	
+	@Override
+	public void checkRep(){
+		var tracks = getTracks();
+		tracks.forEach(doubles -> {assert getObjectsOnTrack(doubles).size() == 1; });
+		var center = center();
+		double r = center == null ? 0 : center.r;
+		for (Planet e : objects) {
+			assert e.getR().getRect()[1] > r;
+			r = e.getR().getRect()[0] + e.r;
+		}
+	}
 }
 
 final class FixedStar extends PhysicalObject{
-	public final float r;
+	public final double r;
 	public final double m;
 	
 	@Override
@@ -188,28 +200,32 @@ final class FixedStar extends PhysicalObject{
 		if (!(o instanceof FixedStar)) return false;
 		if (!super.equals(o)) return false;
 		FixedStar fixedStar = (FixedStar) o;
-		return Double.compare(fixedStar.getR(), getR()) == 0 &&
-				Double.compare(fixedStar.m, m) == 0 &&
-				getName().equals(fixedStar.getName());
+		return fixedStar.getR().equals(getR()) &&
+				Double.compare(fixedStar.m, m) == 0;
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), getName(), getR(), m);
+		return Objects.hash(super.hashCode(), getR(), m);
 	}
 	
-	FixedStar(String name, float r, double m) {
-		super(name, 0, 0);
+	@Override
+	public FixedStar clone() {
+		return new FixedStar(getName(), r, m);
+	}
+	
+	FixedStar(String name, double r, double m) {
+		super(name, new double[]{r}, 0);
 		this.r = r;
 		this.m = m;
 	}
 }
 
-final class Planet extends PhysicalObject {
+class Planet extends PhysicalObject {
 	private final String color;
 	private final Form form;
-	public final double r;
-	private final double v;
+	public final double r;              //radius of the planet
+	public final double v;
 	
 	enum Form{
 		Solid, Liquid, Gas
@@ -224,31 +240,83 @@ final class Planet extends PhysicalObject {
 		if (!(o instanceof Planet)) return false;
 		if (!super.equals(o)) return false;
 		Planet planet = (Planet) o;
-		return Double.compare(planet.getR(), getR()) == 0 &&
+		return Objects.equals(planet.getR(), getR()) &&
 				Double.compare(planet.v, v) == 0 &&
-				getName().equals(planet.getName()) &&
-				color.equals(planet.color) &&
+				getColor().equals(planet.getColor()) &&
 				getForm() == planet.getForm();
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(super.hashCode(), getName(), color, getForm(), getR(), v);
+		return Objects.hash(super.hashCode(), getColor(), getForm(), getR(), v);
+	}
+	
+	@Override
+	public Planet clone() {
+		var tmp = new Planet(getName(), getForm(), getColor(), r, getR().getRect(), v, pos_init);
+		tmp.setPos(getPos());
+		return tmp;
 	}
 	
 	void nextTime(double time) {
 		setPos(pos_init + v * time);
 	}
 	
-	private Form getForm() {
+	Form getForm() {
 		return form;
 	}
 	
-	Planet(String name, Form form, String color, double r, double R, double v, Dir dir, double pos) {
+	String getColor() { return color; }
+	
+	/**
+	 * @param name name of the planet
+	 * @param form form of the planet
+	 * @param color color of the planet
+	 * @param r radius of the planet itself
+	 * @param R radius of the planet orbit radius
+	 * @param v radius of its revolution speed
+	 * @param dir direction of its revolution
+	 * @param pos init pos of the planet.
+	 */
+	public Planet(String name, Form form, String color, double r,
+	       double[] R, double v, Dir dir, double pos) {
+		this(name, form, color, r, R, (dir == Dir.CW ? -1 : 1) * Math.abs(v / R[0]), pos);
+	}
+	
+	Planet(String name, Form form, String color, double r,
+	       double[] R, double v, double pos){
 		super(name, R, pos);
 		this.color = color;
 		this.form = form;
 		this.r = r;
-		this.v = (dir == Dir.CW ? -1 : 1) * Math.abs(v / R);
+		this.v = v;
+	}
+	
+	@Override
+	public String toString() {
+		return getName();
+	}
+}
+
+final class PlanetarySystem extends Planet{
+	private Set<Planet> satellites = new TreeSet<>(PhysicalObject.getDefaultComparator());
+	
+	PlanetarySystem(@NotNull Planet center) {
+		super(center.getName(), center.getForm(), center.getColor(), center.r, center.getR().getRect(),
+				center.v, center.getPos());
+	}
+	
+	public boolean addSatellite(@NotNull Planet satellite){
+		return satellites.add(satellite);
+	}
+	
+	@NotNull
+	public Planet[] satellites(){
+		return satellites.toArray(new Planet[0]);
+	}
+	
+	@Nullable
+	public Planet query(@NotNull String name){
+		return CircularOrbitAPIs.find_if(satellites, (Planet p)->p.getName().equals(name));
 	}
 }

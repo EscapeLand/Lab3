@@ -23,7 +23,7 @@ public class CircularOrbitAPIs {
 		for (E i : c) {
 			Float tmp = p.get(i.getR());
 			if(tmp == null) tmp = 0.0f;
-			p.put(i.getR(), tmp + 1.0f);
+			p.put(i.getR().getRect()[0], tmp + 1.0f);
 			sum++;
 		}
 		for(Map.Entry<Double, Float> i: p.entrySet()) p.put(i.getKey(), i.getValue() / sum);
@@ -33,7 +33,7 @@ public class CircularOrbitAPIs {
 		return H;
 	}
 	
-	public static<L extends PhysicalObject, E extends PhysicalObject> int getLogicalDistance (CircularOrbit<L, E> c, E a, E b){
+	public static int getLogicalDistance (CircularOrbit c, PhysicalObject a, PhysicalObject b){
 		Graph<PhysicalObject> graph = c.getGraph();
 		if(!graph.vertices().containsAll(Arrays.asList(a, b))) return -1;
 		if(a == b) return 0;
@@ -63,7 +63,7 @@ public class CircularOrbitAPIs {
 	}
 	
 	public static<L extends PhysicalObject, E extends PhysicalObject> double getPhysicalDistance (CircularOrbit<L, E> c, PhysicalObject e1, PhysicalObject e2){
-		return oppositeSide(Math.abs(e1.getPos() - e2.getPos()), e1.getR(), e2.getR());
+		return oppositeSide(Math.abs(e1.getPos() - e2.getPos()), e1.getR().getRect()[0], e2.getR().getRect()[0]);
 	}
 	
 	public static<L extends PhysicalObject, E extends PhysicalObject> Difference getDifference (CircularOrbit<L, E> c1, CircularOrbit<L, E> c2){
@@ -72,11 +72,13 @@ public class CircularOrbitAPIs {
 		c1.forEach(lc1::add);
 		c2.forEach(lc2::add);
 		
-		Map<Double, Integer> Rc1 = new TreeMap<>(Double::compare);
-		Map<Double, Integer> Rc2 = new TreeMap<>(Double::compare);
+		Map<Double[], Integer> Rc1 = new HashMap<>();
+		Map<Double[], Integer> Rc2 = new HashMap<>();
 		
-		lc1.forEach(x->Rc1.put(x.getR(), Rc1.get(x.getR()) == null ? 1 : Rc1.get(x.getR()) + 1));
-		lc2.forEach(x->Rc2.put(x.getR(), Rc2.get(x.getR()) == null ? 1 : Rc2.get(x.getR()) + 1));
+		lc1.forEach(x->Rc1.put(x.getR().getRect_alt(), Rc1.get(x.getR().getRect_alt()) == null ? 1
+				: Rc1.get(x.getR().getRect_alt()) + 1));
+		lc2.forEach(x->Rc2.put(x.getR().getRect_alt(), Rc2.get(x.getR().getRect_alt()) == null ? 1
+				: Rc2.get(x.getR().getRect_alt()) + 1));
 		
 		int m = lc1.size() > lc2.size() ? lc1.size() : lc2.size();
 		
@@ -89,33 +91,33 @@ public class CircularOrbitAPIs {
 					Ic1.hasNext() ? Ic1.next() : -Ic2.next();
 		}
 		
-		Map<Double, Set<E>> OBJDif1 = new TreeMap<>(Double::compare);
-		Map<Double, Set<E>> OBJDif2 = new TreeMap<>(Double::compare);
+		Map<Double[], Set<E>> OBJDif1 = new HashMap<>();
+		Map<Double[], Set<E>> OBJDif2 = new HashMap<>();
 		
 		for (E e : lc1) {
 			if(!lc2.contains(e)) {
-				Set<E> tmp = OBJDif1.get(e.getR());
+				Set<E> tmp = OBJDif1.get(e.getR().getRect_alt());
 				if(tmp != null) tmp.add(e);
 				else{
 					tmp = new HashSet<>();
 					tmp.add(e);
-					OBJDif1.put(e.getR(), tmp);
+					OBJDif1.put(e.getR().getRect_alt(), tmp);
 				}
 			}
-			else if(!OBJDif1.containsKey(e.getR())) OBJDif1.put(e.getR(), null);
+			else if(!OBJDif1.containsKey(e.getR().getRect_alt())) OBJDif1.put(e.getR().getRect_alt(), null);
 		}
 		
 		for (E e : lc2) {
 			if(!lc1.contains(e)) {
-				Set<E> tmp = OBJDif2.get(e.getR());
+				Set<E> tmp = OBJDif2.get(e.getR().getRect_alt());
 				if(tmp != null) tmp.add(e);
 				else{
 					tmp = new HashSet<>();
 					tmp.add(e);
-					OBJDif2.put(e.getR(), tmp);
+					OBJDif2.put(e.getR().getRect_alt(), tmp);
 				}
 			}
-			else if(!OBJDif2.containsKey(e.getR())) OBJDif2.put(e.getR(), null);
+			else if(!OBJDif2.containsKey(e.getR().getRect_alt())) OBJDif2.put(e.getR().getRect_alt(), null);
 		}
 		
 		return new Difference<>(Rc1.size() - Rc2.size(), trackDif, new ArrayList<>(OBJDif1.values()), new ArrayList<>(OBJDif2.values()));

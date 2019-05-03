@@ -1,8 +1,8 @@
 package appliactions;
 
 import circularOrbit.CircularOrbit;
+import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
-import circularOrbit.SetCircularOrbit;
 import track.Track;
 
 import javax.swing.*;
@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 import static APIs.CircularOrbitAPIs.getLogicalDistance;
 import static APIs.CircularOrbitAPIs.transform;
 
-public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, User> {
+public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser, User> {
 	@Override
 	public boolean loadFromFile(String path) throws IOException {
 		File file = new File(path);
@@ -106,6 +106,7 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 				txtFrV = new JTextField("0.99");
 		JButton btnRltApply = new JButton("Apply");
 		btnRltApply.addActionListener(e->{
+			if(Float.valueOf(txtFrV.getText()) > 1) return;
 			var a = query(txtA.getText());
 			var b = query(txtB.getText());
 			if(a == null || b == null) return;
@@ -126,9 +127,9 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 		//============================================================
 		
 		JPanel pnlExt = new JPanel();
-		var tmpuser = tracks.get(Track.std(1));
+		var tmpuser = getObjectsOnTrack(new double[]{1});
 		Set<String> tmpstring;
-		if(tmpuser == null) tmpstring = null;
+		if(tmpuser.isEmpty()) tmpstring = null;
 		else tmpstring = new HashSet<>(tmpuser.size());
 		if(tmpstring != null) transform(tmpuser, tmpstring, PhysicalObject::getName);
 		JComboBox<String> cmbElm = new JComboBox<>(tmpstring == null ? new String[]{} : tmpstring.toArray(new String[0]));
@@ -187,14 +188,11 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 			n = vertex.size();
 			rSet.forEach(p->{
 				if(vertex.remove(p)){
-					if(tracks.get(Track.std(tmp + 1)) == null) addTrack(tmp + 1);
-					moveObject((User) p, tmp + 1);
+					moveObject((User) p, new double[]{tmp + 1});
 				}
 			});
 			cur = rSet;
 		}
-		
-		tracks.entrySet().removeIf(trackSetEntry -> trackSetEntry.getValue().isEmpty());
 	}
 	
 	private int extendVal(User first){
@@ -207,7 +205,7 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 			Map<PhysicalObject, Float> rMap = new HashMap<>();
 			cur.forEach((u, f)->{
 				rMap.putAll(graph.targets(u));
-				rMap.entrySet().removeIf(t->t.getKey().getR() < u.getR());
+				rMap.entrySet().removeIf(t->t.getKey().getR().getRect()[0] < u.getR().getRect()[0]);
 				rMap.values().forEach(i->i *= f);
 				rMap.entrySet().removeIf(t->t.getValue() < 0.02);
 			});
@@ -222,6 +220,11 @@ public final class SocialNetworkCircle extends SetCircularOrbit<CentralUser, Use
 	protected String[] hintForUser() {
 		return PhysicalObjectFactory.hint_User;
 	}
+	
+	@Override
+	public void checkRep() {
+		forEach(u->{assert u.getR().getRect()[0] == getLogicalDistance(this, center(), u);});
+	}
 }
 
 enum Gender{
@@ -233,13 +236,13 @@ final class User extends PhysicalObject {
 	private final int age;
 	
 	User(Double r, String name, int age, Gender gender) {
-		super(name, r, 360 * Math.random());
+		super(name, new double[]{r}, 360 * Math.random());
 		this.gender = gender;
 		this.age = age;
 	}
 	
 	User(String name, int age, Gender gender) {
-		super(name, -1);
+		super(name, new double[]{-1});
 		this.gender = gender;
 		this.age = age;
 	}
@@ -268,6 +271,13 @@ final class User extends PhysicalObject {
 	}
 	
 	@Override
+	public User clone() {
+		var tmp = new User(R_init.getRect()[0], getName(), getAge(), getGender());
+		tmp.setR(getR());
+		return tmp;
+	}
+	
+	@Override
 	public String toString() {
 		return "<" + getName() +
 				", " + age +
@@ -281,7 +291,7 @@ final class CentralUser extends PhysicalObject{
 	private final int age;
 	
 	CentralUser(String name, int age, Gender gender) {
-		super(name, 0, 0);
+		super(name, new double[]{0}, 0);
 		this.gender = gender;
 		this.age = age;
 	}
@@ -300,5 +310,10 @@ final class CentralUser extends PhysicalObject{
 				", " + age +
 				", " + gender.toString() +
 				'>';
+	}
+	
+	@Override
+	public CentralUser clone() {
+		return new CentralUser(getName(), getAge(), getGender());
 	}
 }

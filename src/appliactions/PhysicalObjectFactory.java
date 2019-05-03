@@ -17,7 +17,7 @@ public class PhysicalObjectFactory {
 			case "Planet":
 				assert args.length == 9;
 				return new Planet(args[1], Enum.valueOf(Planet.Form.class, args[2]), args[3],
-						Float.valueOf(args[4]), Float.valueOf(args[5]), Double.valueOf(args[6]),
+						Double.valueOf(args[4]), new double[]{Double.valueOf(args[5])}, Double.valueOf(args[6]),
 								Enum.valueOf(Planet.Dir.class, args[7]), Float.valueOf(args[8]));
 			case "Electron":
 				assert args.length == 2;
