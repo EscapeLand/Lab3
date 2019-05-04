@@ -80,6 +80,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		if(!objects.contains(obj)) return false;
 		var tmp = new Track<>(to);
 		obj.setR(tmp);
+		addTrack(to);
 		return true;
 	}
 	
@@ -142,33 +143,33 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		JPanel entropy = new JPanel();
 		var ops = new String[]{"Add", "Remove"};
 		
-		JLabel lblrmv = new JLabel("remove track");
+		JComboBox<String> cmbOps = new JComboBox<>(ops);
 		JTextField tracknum = new JTextField("-1");
 		JButton trackExec = new JButton("Execute");
 		
 		trackExec.addActionListener(e -> {
-			Double d = Double.valueOf(tracknum.getText());
-			removeTrack(new double[]{d});
-			
+			switch (cmbOps.getSelectedIndex()){
+				case 0:
+					addTrack(new double[]{Double.valueOf(tracknum.getText().trim())});
+					break;
+				case 1:
+					Double d = Double.valueOf(tracknum.getText().trim());
+					removeTrack(new double[]{d});
+					break;
+			}
 			end.accept(this);
 		});
 		
-		trackOP.add(lblrmv); trackOP.add(tracknum); trackOP.add(trackExec);
+		trackOP.add(cmbOps); trackOP.add(tracknum); trackOP.add(trackExec);
 		common.add(trackOP);
 		
 		JComboBox<String> objops = new JComboBox<>(ops);
 		Set<Track> tmp = new TreeSet<>(Track.defaultComparator);
 		transform(getTracks(), tmp, Track::new);
 		JComboBox<Track> objTidx = new JComboBox<>(tmp.toArray(new Track[0]));
+		objTidx.setEditable(true);
 		JButton objExec = new JButton("Execute");
-		objops.addItemListener(e->{
-			String item = (String) e.getItem();
-			switch (item){
-				case "Add": objTidx.setVisible(false); break;
-				case "Remove": objTidx.setVisible(true); break;
-				default: break;
-			}
-		});
+
 		objExec.addActionListener(e -> {
 			switch(objops.getSelectedIndex()){
 				case 0:
@@ -185,7 +186,11 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 				case 1:
 					Track r = (Track) objTidx.getSelectedItem();
 					if(r != null) {
-						removeTrack(r.getRect());
+						String name = prompt(frame, "name of the object",
+								"Which object to remove? ", null);
+						if(name.equals("")) return;
+						E o = find_if(objects, i->i.getR().equals(r) && i.getName().equals(name));
+						removeObject(o);
 					}
 					break;
 				default: return;
@@ -195,7 +200,6 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		
 		objOP.add(objops); objOP.add(objTidx); objOP.add(objExec);
 		common.add(objOP);
-		objTidx.setVisible(false);
 		
 		JButton btnent = new JButton("Calculate Entropy");
 		JLabel lblrst = new JLabel("");

@@ -92,7 +92,7 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 			pg.forEach((e, f)->{
 				PhysicalObject a = (PhysicalObject) e[0];
 				PhysicalObject b = (PhysicalObject) e[1];
-				if(Track.compare(a.getR(), b.getR()) > 0)
+				if(Track.compare(a.getR(), b.getR()) <= 0)
 					line(cells.get(a), cells.get(b), f.toString());
 			});
 		}

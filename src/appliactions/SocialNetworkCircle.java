@@ -195,6 +195,13 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 			});
 			cur = rSet;
 		}
+		
+		var edges = graph.edges();
+		edges.forEach((d, f)->{
+			PhysicalObject a = (PhysicalObject) d[0];
+			PhysicalObject b = (PhysicalObject) d[1];
+			if(a.getR().getRect()[0] > b.getR().getRect()[0]) graph.set(a, b, 0);
+		});
 	}
 	
 	/**
