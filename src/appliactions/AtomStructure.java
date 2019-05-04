@@ -260,6 +260,8 @@ final class Electron extends PhysicalObject{
 }
 
 final class Kernel extends PhysicalObject{
+	private int protron;
+	private int neutron;
 	
 	Kernel(String name) {
 		super(name, new double[]{0}, 0);
@@ -268,5 +270,21 @@ final class Kernel extends PhysicalObject{
 	@Override
 	public PhysicalObject clone() {
 		return new Kernel(getName());
+	}
+	
+	public int getProtron() {
+		return protron;
+	}
+	
+	public void setProtron(int protron) {
+		this.protron = protron;
+	}
+	
+	public int getNeutron() {
+		return neutron;
+	}
+	
+	public void setNeutron(int neutron) {
+		this.neutron = neutron;
 	}
 }
