@@ -5,14 +5,14 @@ import circularOrbit.PhysicalObject;
 import graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import track.Track;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -67,20 +67,18 @@ public class CircularOrbitAPIs {
 	}
 	
 	public static<L extends PhysicalObject, E extends PhysicalObject> Difference getDifference (CircularOrbit<L, E> c1, CircularOrbit<L, E> c2){
-		List<E> lc1 = new ArrayList<>();
-		List<E> lc2 = new ArrayList<>();
-		c1.forEach(lc1::add);
-		c2.forEach(lc2::add);
+		Set<E> Sc1 = new TreeSet<>(E.getDefaultComparator());
+		Set<E> Sc2 = new TreeSet<>(E.getDefaultComparator());
+		c1.forEach(Sc1::add);
+		c2.forEach(Sc2::add);
 		
-		Map<Double[], Integer> Rc1 = new HashMap<>();
-		Map<Double[], Integer> Rc2 = new HashMap<>();
+		Map<Track, Integer> Rc1 = new HashMap<>();
+		Map<Track, Integer> Rc2 = new HashMap<>();
 		
-		lc1.forEach(x->Rc1.put(x.getR().getRect_alt(), Rc1.get(x.getR().getRect_alt()) == null ? 1
-				: Rc1.get(x.getR().getRect_alt()) + 1));
-		lc2.forEach(x->Rc2.put(x.getR().getRect_alt(), Rc2.get(x.getR().getRect_alt()) == null ? 1
-				: Rc2.get(x.getR().getRect_alt()) + 1));
+		Sc1.forEach(x->Rc1.put(x.getR(), Rc1.containsKey(x.getR()) ? Rc1.get(x.getR()) + 1 : 1));
+		Sc2.forEach(x->Rc2.put(x.getR(), Rc2.containsKey(x.getR()) ? Rc2.get(x.getR()) + 1 : 1));
 		
-		int m = lc1.size() > lc2.size() ? lc1.size() : lc2.size();
+		int m = Math.max(Sc1.size(), Sc2.size());
 		
 		int[] trackDif = new int[m];
 		Iterator<Integer> Ic1 = Rc1.values().iterator();
@@ -91,36 +89,31 @@ public class CircularOrbitAPIs {
 					Ic1.hasNext() ? Ic1.next() : -Ic2.next();
 		}
 		
-		Map<Double[], Set<E>> OBJDif1 = new HashMap<>();
-		Map<Double[], Set<E>> OBJDif2 = new HashMap<>();
+		Map<Track, Set<E>> OBJDif1 = new HashMap<>();
+		Map<Track, Set<E>> OBJDif2 = new HashMap<>();
 		
-		for (E e : lc1) {
-			if(!lc2.contains(e)) {
-				Set<E> tmp = OBJDif1.get(e.getR().getRect_alt());
-				if(tmp != null) tmp.add(e);
-				else{
-					tmp = new HashSet<>();
-					tmp.add(e);
-					OBJDif1.put(e.getR().getRect_alt(), tmp);
-				}
+		for (E e : Sc1) {
+			if(!Sc2.contains(e)) {
+				Set<E> tmp = OBJDif1.get(e.getR());
+				if(tmp == null) tmp = new TreeSet<>(E.getDefaultComparator());
+				tmp.add(e);
+				OBJDif1.put(e.getR(), tmp);
 			}
-			else if(!OBJDif1.containsKey(e.getR().getRect_alt())) OBJDif1.put(e.getR().getRect_alt(), null);
+			else if(!OBJDif1.containsKey(e.getR())) OBJDif1.put(e.getR(), null);
 		}
 		
-		for (E e : lc2) {
-			if(!lc1.contains(e)) {
-				Set<E> tmp = OBJDif2.get(e.getR().getRect_alt());
-				if(tmp != null) tmp.add(e);
-				else{
-					tmp = new HashSet<>();
-					tmp.add(e);
-					OBJDif2.put(e.getR().getRect_alt(), tmp);
-				}
+		for (E e : Sc2) {
+			if(!Sc1.contains(e)) {
+				Set<E> tmp = OBJDif2.get(e.getR());
+				if(tmp == null) tmp = new TreeSet<>(E.getDefaultComparator());
+				tmp.add(e);
+				OBJDif2.put(e.getR(), tmp);
 			}
-			else if(!OBJDif2.containsKey(e.getR().getRect_alt())) OBJDif2.put(e.getR().getRect_alt(), null);
+			else if(!OBJDif2.containsKey(e.getR())) OBJDif2.put(e.getR(), null);
 		}
 		
-		return new Difference<>(Rc1.size() - Rc2.size(), trackDif, new ArrayList<>(OBJDif1.values()), new ArrayList<>(OBJDif2.values()));
+		return new Difference<>(Rc1.size() - Rc2.size(), trackDif,
+				new ArrayList<>(OBJDif1.values()), new ArrayList<>(OBJDif2.values()));
 	}
 	
 	private static double oppositeSide(double includeAngle, double l1, double l2){
@@ -253,8 +246,10 @@ class Difference<E extends PhysicalObject>{
 			s.append("\n轨道").append(i+1).append("的物体数量差异: ").append(trackNumDif[i]);
 			s.append("; 物体差异: {");
 			if(i < OBJDif1.size()) OBJDif1.get(i).forEach(x->s.append(x.getName()).append(", "));
+			if(i < OBJDif1.size() && !OBJDif1.get(i).isEmpty()) s.append("\b\b");
 			s.append("} - {");
 			if(i < OBJDif2.size()) OBJDif2.get(i).forEach(x->s.append(x.getName()).append(", "));
+			if(i < OBJDif2.size() && !OBJDif2.get(i).isEmpty()) s.append("\b\b");
 			s.append("}");
 		}
 		

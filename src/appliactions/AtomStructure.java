@@ -14,7 +14,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -146,6 +145,12 @@ public final class AtomStructure extends ConcreteCircularOrbit<Kernel, Electron>
 		return spec;
 	}
 	
+	/**
+	 * recover the atom system when transit failed.
+	 * @param from transit from
+	 * @param to transit to
+	 * @see AtomStructure#transit(double[], double[], int)
+	 */
 	private void recover(double[] from, double[] to){
 		var rec = caretaker.getMementos(from, to);
 		if(rec == null) throw new RuntimeException("cannot recover: " + Arrays.toString(from) + "->" + Arrays.toString(to));

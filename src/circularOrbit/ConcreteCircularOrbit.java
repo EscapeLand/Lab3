@@ -11,19 +11,40 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static APIs.CircularOrbitAPIs.*;
-import static appliactions.PhysicalObjectFactory.*;
+import static appliactions.PhysicalObjectFactory.insert_copy;
+import static appliactions.PhysicalObjectFactory.produce;
 import static circularOrbit.PhysicalObject.getDefaultComparator;
 
+/**
+ * Mutable.
+ * an implement of CircularOrbit.
+ * @param <L> the type of the center.
+ * @param <E> type of the objects on object
+ */
 public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends PhysicalObject>
 		implements CircularOrbit<L, E>
 {
+	/*
+		RI: for each object, its track is in the set tracks;
+		AF: AF(relationship) = the relationship graph of the objects.
+			AF(centre) = the center of the circular orbit.
+			AF(objects) = the sum of the objects on the orbit.
+	 */
 	private Graph<PhysicalObject> relationship = Graph.empty();
 	private L centre = null;
 	
 	protected Set<E> objects = new TreeSet<>(getDefaultComparator());
 	private Set<Track> tracks = new HashSet<>();
 	
+	/**
+	 * @return hint for user.
+	 * @apiNote this function will be astonished.
+	 */
 	protected abstract String[] hintForUser();
+	
+	/**
+	 * check RI.
+	 */
 	public abstract void checkRep();
 	
 	@Override
@@ -44,6 +65,11 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		return prev;
 	}
 	
+	/**
+	 * test if a track is exist in the circular orbit.
+	 * @param r the radius of the orbit.
+	 * @return true if the track exist.
+	 */
 	protected boolean findTrack(double[] r){
 		var tmp = new Track(r);
 		return tracks.contains(tmp);
@@ -98,6 +124,12 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 		throw new RuntimeException("only AtomStructure can transit. ");
 	}
 	
+	/**
+	 * add User Interface controls on the frame.
+	 * @param frame where to add controls.
+	 * @param end what to do at the end of each action.
+	 * @return a panel that includes the control added.
+	 */
 	protected JPanel test(JFrame frame, Consumer<CircularOrbit> end){
 		JPanel common = new JPanel();
 		common.setBounds(8, 8, 336, 160);
@@ -208,5 +240,10 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 			if(e.getR().equals(tmp)) ret.add((E) e.clone());
 		});
 		return ret;
+	}
+	
+	@Override
+	public int size() {
+		return objects.size();
 	}
 }

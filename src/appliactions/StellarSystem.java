@@ -6,7 +6,6 @@ import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import track.Track;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,8 +13,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,10 +25,18 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	private double timeSpan = 2000;
 	private Runnable refresh;
 	
+	/**
+	 * register a refresh function.
+	 * it will be called whenever the stellar system is changed.
+	 * @param refresh the function.
+	 */
 	public void register(Runnable refresh) {
 		this.refresh = refresh;
 	}
 	
+	/**
+	 * start a new thread to refresh the User Interface.
+	 */
 	public void start(){
 		loop = new Thread(refresh);
 		loop.start();
@@ -155,19 +162,33 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 		return spec;
 	}
 	
+	/**
+	 * update the system, as it is at ({@code time += timeSpan}).
+	 */
 	public void nextTime(){
 		this.time += timeSpan;
 		forEach(p->p.nextTime(time));
 	}
 	
+	/**
+	 * calculate the stellar system at a specific time.
+	 * @param time the time to calculate.
+	 */
 	private void setTime(double time){
 		if(loop != null) loop.interrupt();
 		this.time = time;
 		forEach(p->p.nextTime(time));
 	}
 	
+	/**
+	 * reset the system to its initial state.
+	 */
 	private void reset(){ setTime(0); }
 	
+	/**
+	 * set how much time is covered in 60ms. the greater, the faster the planets runs.
+	 * @param timeSpan time span.
+	 */
 	private void setTimeSpan(double timeSpan) {
 		this.timeSpan = timeSpan;
 	}

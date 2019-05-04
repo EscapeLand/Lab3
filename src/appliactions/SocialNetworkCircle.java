@@ -3,7 +3,6 @@ package appliactions;
 import circularOrbit.CircularOrbit;
 import circularOrbit.ConcreteCircularOrbit;
 import circularOrbit.PhysicalObject;
-import track.Track;
 
 import javax.swing.*;
 import java.awt.*;
@@ -174,6 +173,9 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 		return spec;
 	}
 	
+	/**
+	 * update each user's track when {@code relationship} is modified.
+	 */
 	private void updateR(){
 		var graph = getGraph();
 		Set<PhysicalObject> cur = new HashSet<>(1);
@@ -195,6 +197,11 @@ public final class SocialNetworkCircle extends ConcreteCircularOrbit<CentralUser
 		}
 	}
 	
+	/**
+	 * calculate expansion of a user in the first track.
+	 * @param first user in the first orbit.
+	 * @return expansion degree of the user.
+	 */
 	private int extendVal(User first){
 		Map<PhysicalObject, Float> cur = new HashMap<>(1);
 		Set<PhysicalObject> rSet = new HashSet<>();

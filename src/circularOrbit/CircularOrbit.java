@@ -118,4 +118,8 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	 */
 	public void process(Consumer<CircularOrbit> end);
 	
+	/**
+	 * @return the number of objects on tracks. (center is NOT included)
+	 */
+	int size();
 }
