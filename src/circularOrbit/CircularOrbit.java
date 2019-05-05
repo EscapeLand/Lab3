@@ -57,9 +57,8 @@ public interface CircularOrbit<L extends PhysicalObject, E extends PhysicalObjec
 	 * @param a begin of relation.
 	 * @param b end of relation
 	 * @param val weight of the relation. if val == 0, it means remove the relation.
-	 * @return if the relation is already exist, return false; else return true.
 	 */
-	public boolean setRelation(PhysicalObject a, PhysicalObject b, float val);
+	public void setRelation(PhysicalObject a, PhysicalObject b, float val);
 	
 	/**
 	 * @return return the relation graph of the circular orbit.

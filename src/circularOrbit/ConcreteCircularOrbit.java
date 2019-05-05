@@ -90,10 +90,10 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 	}
 	
 	@Override
-	public boolean setRelation(@NotNull PhysicalObject a, @NotNull PhysicalObject b, float val){
+	public void setRelation(@NotNull PhysicalObject a, @NotNull PhysicalObject b, float val){
 		relationship.add(a);
 		relationship.add(b);
-		return 0 == relationship.set(a, b, val) && 0 ==relationship.set(b, a, val);
+		relationship.set(a, b, val);
 	}
 	
 	@NotNull @Override
