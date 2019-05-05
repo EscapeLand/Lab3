@@ -13,23 +13,27 @@ public class PhysicalObjectFactory {
 	@Nullable
 	public static PhysicalObject produce(@NotNull String[] args){
 		assert args.length > 0;
-		switch(args[0]){
-			case "Planet":
-				assert args.length == 9;
-				return new Planet(args[1], Enum.valueOf(Planet.Form.class, args[2]), args[3],
-						Double.valueOf(args[4]), new double[]{Double.valueOf(args[5])}, Double.valueOf(args[6]),
-								Enum.valueOf(Planet.Dir.class, args[7]), Float.valueOf(args[8]));
-			case "Electron":
-				assert args.length == 2;
-				return new Electron(Float.valueOf(args[1]));
-			case "User":
-				assert args.length == 5;
-				return new User(Double.valueOf(args[1]), args[2], Integer.valueOf(args[3]),
-						Enum.valueOf(Gender.class, args[4]));
-			case "CentralUser":
-				assert args.length == 4;
-				return new CentralUser(args[1], Integer.valueOf(args[2]), Enum.valueOf(Gender.class, args[3]));
-			default: return null;
+		try{
+			switch(args[0]){
+				case "Planet":
+					assert args.length == 9;
+					return new Planet(args[1], Enum.valueOf(Planet.Form.class, args[2]), args[3],
+							Double.valueOf(args[4]), new double[]{Double.valueOf(args[5])}, Double.valueOf(args[6]),
+							Enum.valueOf(Planet.Dir.class, args[7]), Float.valueOf(args[8]));
+				case "Electron":
+					assert args.length == 2;
+					return new Electron(Float.valueOf(args[1]));
+				case "User":
+					assert args.length == 5;
+					return new User(Double.valueOf(args[1]), args[2], Integer.valueOf(args[3]),
+							Enum.valueOf(Gender.class, args[4]));
+				case "CentralUser":
+					assert args.length == 4;
+					return new CentralUser(args[1], Integer.valueOf(args[2]), Enum.valueOf(Gender.class, args[3]));
+				default: return null;
+			}
+		} catch (IllegalArgumentException e) {
+			return null;
 		}
 	}
 	

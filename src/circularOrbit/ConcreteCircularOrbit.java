@@ -151,6 +151,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 			switch (cmbOps.getSelectedIndex()){
 				case 0:
 					addTrack(new double[]{Double.valueOf(tracknum.getText().trim())});
+					checkRep();
 					break;
 				case 1:
 					Double d = Double.valueOf(tracknum.getText().trim());
@@ -182,6 +183,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 					}
 					var p = produce(form);
 					if(p != null) addObject((E) p);
+					checkRep();
 					break;
 				case 1:
 					Track r = (Track) objTidx.getSelectedItem();

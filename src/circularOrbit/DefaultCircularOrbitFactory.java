@@ -3,19 +3,27 @@ package circularOrbit;
 import appliactions.AtomStructure;
 import appliactions.SocialNetworkCircle;
 import appliactions.StellarSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
 public class DefaultCircularOrbitFactory implements CircularOrbitFactory {
-	@Override
+	@Override @Nullable
 	public CircularOrbit CreateAndLoad(String loadFrom) throws IOException {
 		CircularOrbit c = Create(loadFrom);
 		if(c == null) return null;
 		c.loadFromFile(loadFrom);
+		assert c instanceof ConcreteCircularOrbit;
+		try{
+			((ConcreteCircularOrbit) c).checkRep();
+			
+		} catch (Exception e) {
+			return null;
+		}
 		return c;
 	}
 	
-	@Override
+	@Override @Nullable
 	public CircularOrbit Create(String type) {
 		if(type.contains("StellarSystem")) return new StellarSystem();
 		else if(type.contains("AtomicStructure")) return new AtomStructure();

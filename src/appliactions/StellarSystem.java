@@ -201,9 +201,11 @@ public final class StellarSystem extends ConcreteCircularOrbit<FixedStar, Planet
 	@Override
 	public void checkRep(){
 		var tracks = getTracks();
-		tracks.forEach(doubles -> {assert getObjectsOnTrack(doubles).size() == 1; });
-		var center = center();
-		double r = center == null ? 0 : center.r;
+		tracks.forEach(doubles -> {assert getObjectsOnTrack(doubles).size() <= 1; });
+		//NOTE: the planet may revolution in the stellar???
+		//var center = center();
+		//double r = center == null ? 0 : center.r;
+		double r = 0;
 		for (Planet e : objects) {
 			assert e.getR().getRect()[1] > r;
 			r = e.getR().getRect()[0] + e.r;

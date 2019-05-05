@@ -127,8 +127,8 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 	private Object circle(Double[] r){
 		if(r[0] < 0) return null;
 		final var style = "shape=ellipse;fillColor=none;movable=0;resizable=0;editable=0;connectable=0;";
-		double basex = length / 2 - r[0];
-		double basey = length / 2 - r[1];
+		double basex = length / 2 - r[0] + 16;
+		double basey = length / 2 - r[1] + 16;
 		return graph.insertVertex(parent, null, "", basex, basey, 2*r[0], 2*r[1], style);
 	}
 	
@@ -139,8 +139,8 @@ public class CircularOrbitHelper<L extends PhysicalObject, E extends PhysicalObj
 			r = new Double[]{scale * (Rs.size() + 1), scale * (Rs.size() + 1)};
 		else r = Rs.get(p.getR().getRect_alt());
 		if(r == null) r = new Double[]{0.0, 0.0};
-		ret[0] = length / 2.0 + r[0] * Math.cos(Math.toRadians(p.getPos()));
-		ret[1] = length / 2.0 + r[1] * Math.sin(Math.toRadians(p.getPos()));
+		ret[0] = length / 2.0 + r[0] * Math.cos(Math.toRadians(p.getPos())) + 16;
+		ret[1] = length / 2.0 + r[1] * Math.sin(Math.toRadians(p.getPos())) + 16;
 		return ret;
 	}
 	
