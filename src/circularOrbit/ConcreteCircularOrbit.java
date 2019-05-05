@@ -176,7 +176,7 @@ public abstract class ConcreteCircularOrbit<L extends PhysicalObject, E extends 
 					var form = promptForm(frame, "Add object", hintForUser());
 					switch (form.length){
 						case 1: form = insert_copy(form, "Electron", 0); break;
-						case 3: form = insert_copy(form, "User", 0); break;
+						case 4: form = insert_copy(form, "User", 0); break;
 						case 8: form = insert_copy(form, "Planet", 0); break;
 						default: break;
 					}
