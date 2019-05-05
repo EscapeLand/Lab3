@@ -14,12 +14,7 @@ public class DefaultCircularOrbitFactory implements CircularOrbitFactory {
 		if(c == null) return null;
 		c.loadFromFile(loadFrom);
 		assert c instanceof ConcreteCircularOrbit;
-		try{
-			((ConcreteCircularOrbit) c).checkRep();
-			
-		} catch (Exception e) {
-			return null;
-		}
+		((ConcreteCircularOrbit) c).checkRep();
 		return c;
 	}
 	
